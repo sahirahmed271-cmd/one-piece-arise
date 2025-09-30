@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One Piece Tic Tac Toe</title>
+<style>
+body{margin:0;font-family:Arial;text-align:center;background:url('https://i.ibb.co/0B0Y2YF/one-piece-bg.jpg') center/cover no-repeat;background-size:cover;color:gold;}
+h1{margin-top:20px;text-shadow:2px 2px black;}
+#board{display:grid;grid-template-columns:repeat(3,100px);grid-gap:5px;justify-content:center;margin-top:50px;}
+.cell{width:100px;height:100px;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-size:48px;cursor:pointer;border-radius:10px;}
+#message{margin-top:20px;font-size:24px;}
+</style>
+</head>
+<body>
+<h1>One Piece Tic Tac Toe</h1>
+<div id="board"></div>
+<div id="message"></div>
+<script>
+let board=document.getElementById('board'),message=document.getElementById('message'),cells=[],turn='X';
+for(let i=0;i<9;i++){let c=document.createElement('div');c.className='cell';c.addEventListener('click',()=>makeMove(c,i));board.appendChild(c);cells.push(c);}
+let winCombos=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+function makeMove(c,i){if(c.textContent||message.textContent)return;c.textContent=turn;checkWin();turn=turn==='X'?'O':'X';}
+function checkWin(){for(let combo of winCombos){if(cells[combo[0]].textContent&&cells[combo[0]].textContent===cells[combo[1]].textContent&&cells[combo[0]].textContent===cells[combo[2]].textContent){message.textContent=cells[combo[0]].textContent+' Wins!';return;}}
+if(cells.every(c=>c.textContent)){message.textContent='Draw!';}}
+</script>
+</body>
+</html>

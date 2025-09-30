@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One Piece Flappy Bird</title>
+<style>
+body{margin:0;overflow:hidden;background:url('https://i.ibb.co/0B0Y2YF/one-piece-bg.jpg') center/cover no-repeat;}
+#gameCanvas{display:block;margin:0 auto;border:3px solid gold;border-radius:15px;background-color:rgba(255,255,255,0.1);}
+#score{position:absolute;top:10px;left:50%;transform:translateX(-50%);color:gold;font-size:24px;font-weight:bold;}
+</style>
+</head>
+<body>
+<div id="score">Score: 0</div>
+<canvas id="gameCanvas" width="400" height="600"></canvas>
+<script>
+const canvas=document.getElementById('gameCanvas');const ctx=canvas.getContext('2d');
+let bird={x:100,y:300,width:40,height:40,gravity:0.6,lift:-12,velocity:0,img:new Image()};
+bird.img.src='https://i.ibb.co/3RztLv7/luffy.png';
+let pipes=[],score=0,gameOver=false;
+document.addEventListener('keydown',()=>{bird.velocity=bird.lift;});
+function spawnPipe(){let gap=150;let top=Math.random()*(canvas.height-gap-100)+50;pipes.push({x:canvas.width,y:0,width:60,height:top});pipes.push({x:canvas.width,y:top+gap,width:60,height:canvas.height-top-gap});}
+function update(){if(gameOver)return;ctx.clearRect(0,0,canvas.width,canvas.height);
+bird.velocity+=bird.gravity;bird.y+=bird.velocity;ctx.drawImage(bird.img,bird.x,bird.y,bird.width,bird.height);
+for(let i=0;i<pipes.length;i++){let p=pipes[i];p.x-=3;ctx.fillStyle='green';ctx.fillRect(p.x,p.y,p.width,p.height);
+if(bird.x< p.x+p.width && bird.x+bird.width>p.x && bird.y<p.y+p.height && bird.y+bird.height>p.y){gameOver=true;document.getElementById('score').innerText="Game Over! Score: "+score;return;}
+if(p.x+p.width<0){pipes.splice(i,1);if(i%2==0){score++;document.getElementById('score').innerText="Score: "+score;}i--;}}
+if(bird.y+bird.height>canvas.height||bird.y<0){gameOver=true;document.getElementById('score').innerText="Game Over! Score: "+score;return;}
+requestAnimationFrame(update);}
+setInterval(spawnPipe,2000);update();
+</script>
+</body>
+</html>

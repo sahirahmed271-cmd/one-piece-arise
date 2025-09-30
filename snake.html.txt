@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One Piece Snake Game</title>
+<style>
+body{margin:0;background:url('https://i.ibb.co/0B0Y2YF/one-piece-bg.jpg') center/cover no-repeat;background-size:cover;}
+#gameCanvas{display:block;margin:0 auto;background:rgba(0,0,0,0.3);border:3px solid gold;border-radius:15px;}
+#score{position:absolute;top:10px;left:50%;transform:translateX(-50%);color:gold;font-size:24px;font-weight:bold;}
+</style>
+</head>
+<body>
+<div id="score">Score: 0</div>
+<canvas id="gameCanvas" width="400" height="400"></canvas>
+<script>
+const canvas=document.getElementById('gameCanvas');const ctx=canvas.getContext('2d');
+const box=20;let snake=[{x:9*box,y:9*box}],direction='RIGHT',food={x:Math.floor(Math.random()*20)*box,y:Math.floor(Math.random()*20)*box},score=0;
+document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'&&direction!=='RIGHT')direction='LEFT';if(e.key==='ArrowUp'&&direction!=='DOWN')direction='UP';if(e.key==='ArrowRight'&&direction!=='LEFT')direction='RIGHT';if(e.key==='ArrowDown'&&direction!=='UP')direction='DOWN';});
+function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);
+ctx.fillStyle='lime';for(let s of snake)ctx.fillRect(s.x,s.y,box,box);
+ctx.fillStyle='red';ctx.fillRect(food.x,food.y,box,box);
+let head={x:snake[0].x,y:snake[0].y};
+if(direction==='LEFT')head.x-=box;if(direction==='RIGHT')head.x+=box;if(direction==='UP')head.y-=box;if(direction==='DOWN')head.y+=box;
+if(head.x<0||head.y<0||head.x>=canvas.width||head.y>=canvas.height||snake.some(s=>s.x===head.x&&s.y===head.y)){alert('Game Over! Score: '+score);document.location.reload();}
+snake.unshift(head);
+if(head.x===food.x&&head.y===food.y){score++;document.getElementById('score').innerText='Score: '+score;food={x:Math.floor(Math.random()*20)*box,y:Math.floor(Math.random()*20)*box};}else{snake.pop();}
+requestAnimationFrame(draw);}
+draw();
+</script>
+</body>
+</html>

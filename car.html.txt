@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One Piece Car Game</title>
+<style>
+body {
+  margin: 0;
+  overflow: hidden;
+  background: url('https://i.ibb.co/0B0Y2YF/one-piece-bg.jpg') no-repeat center center fixed;
+  background-size: cover;
+}
+#gameCanvas {
+  display: block;
+  margin: 0 auto;
+  border: 3px solid gold;
+  border-radius: 15px;
+  background-color: rgba(255,255,255,0.1);
+}
+#score {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: gold;
+  font-size: 24px;
+  font-weight: bold;
+}
+</style>
+</head>
+<body>
+<div id="score">Score: 0</div>
+<canvas id="gameCanvas" width="400" height="600"></canvas>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let car = {
+  x: canvas.width/2 - 25,
+  y: canvas.height - 120,
+  width: 50,
+  height: 100,
+  speed: 7,
+  img: new Image()
+};
+car.img.src = 'https://i.ibb.co/ZV2m3ZK/luffy-car.png'; // placeholder Luffy car
+
+let obstacles = [];
+let score = 0;
+let gameOver = false;
+
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'ArrowLeft' && car.x > 0) car.x -= car.speed;
+  if(e.key === 'ArrowRight' && car.x + car.width < canvas.width) car.x += car.speed;
+});
+
+function spawnObstacle() {
+  let width = Math.random()*60+40;
+  let x = Math.random()*(canvas.width-width);
+  obstacles.push({x:x, y:-100, width:width, height:100, speed:5});
+}
+
+function update() {
+  if(gameOver) return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(car.img, car.x, car.y, car.width, car.height);
+
+  for(let i=0;i<obstacles.length;i++){
+    let obs = obstacles[i];
+    obs.y += obs.speed;
+    ctx.fillStyle='red';
+    ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+
+    if(car.x < obs.x+obs.width &&
+       car.x+car.width > obs.x &&
+       car.y < obs.y+obs.height &&
+       car.y+car.height > obs.y){
+      gameOver = true;
+      document.getElementById('score').innerText = "Game Over! Score: " + score;
+      return;
+    }
+
+    if(obs.y > canvas.height){
+      obstacles.splice(i,1);
+      score++;
+      document.getElementById('score').innerText = "Score: " + score;
+      i--;
+    }
+  }
+
+  requestAnimationFrame(update);
+}
+
+setInterval(spawnObstacle,1500);
+update();
+</script>
+</body>
+</html>
