@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>One Piece Car Game</title>
 <style>
-body { margin:0; overflow:hidden; background:url('https://i.ibb.co/0B0Y2YF/one-piece-bg.jpg') center/cover no-repeat; background-size:cover; }
+body { margin:0; overflow:hidden; background:url('one-piece-bg.jpg') center/cover no-repeat; }
 #gameCanvas { display:block; margin:0 auto; border:3px solid gold; border-radius:15px; background-color:rgba(255,255,255,0.1); }
 #score { position:absolute; top:10px; left:50%; transform:translateX(-50%); color:gold; font-size:24px; font-weight:bold; }
 button { padding:10px 20px; font-size:18px; margin-top:10px; border:2px solid gold; border-radius:8px; cursor:pointer; }
@@ -17,12 +17,15 @@ button { padding:10px 20px; font-size:18px; margin-top:10px; border:2px solid go
 <script>
 const canvas=document.getElementById('gameCanvas'),ctx=canvas.getContext('2d');
 let car={x:175,y:480,width:50,height:100,speed:10,img:new Image()};
-car.img.src='https://i.ibb.co/4YvG6bZ/luffy-car.png';
+car.img.src='luffy-car.png'; // Local image
 let obstacles=[],score=0,gameOver=false;
 let left=false,right=false;
+
 document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')left=true;if(e.key==='ArrowRight')right=true;});
 document.addEventListener('keyup',e=>{if(e.key==='ArrowLeft')left=false;if(e.key==='ArrowRight')right=false;});
+
 function spawnObstacle(){let w=Math.random()*60+40; let x=Math.random()*(canvas.width-w); obstacles.push({x:x,y:-100,width:w,height:100,speed:5});}
+
 function update(){
     if(gameOver)return;
     if(left&&car.x>0)car.x-=car.speed;
@@ -33,8 +36,7 @@ function update(){
         let o=obstacles[i]; o.y+=o.speed; ctx.fillStyle='red'; ctx.fillRect(o.x,o.y,o.width,o.height);
         if(car.x<o.x+o.width && car.x+car.width>o.x && car.y<o.y+o.height && car.y+car.height>o.y){
             gameOver=true;
-            document.getElementById('score').innerHTML="Game Over! Score: "+score+"<br><button onclick='restartGame()'>Restart</button>";
-            function restartGame(){location.reload();}
+            document.getElementById('score').innerHTML="Game Over! Score: "+score+"<br><button onclick='location.reload()'>Restart</button>";
             return;
         }
         if(o.y>canvas.height){obstacles.splice(i,1);score++; document.getElementById('score').innerText="Score: "+score;i--;}
@@ -45,6 +47,7 @@ setInterval(spawnObstacle,1500); update();
 </script>
 </body>
 </html>
+
 
 
 
