@@ -3,24 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>One Piece Rock Paper Scissors</title>
+<title>One Piece RPS</title>
 <style>
-body{margin:0;text-align:center;font-family:Arial;background:url('https://i.ibb.co/0B0Y2YF/one-piece-bg.jpg') center/cover no-repeat;color:gold;}
+body{margin:0;font-family:Arial;text-align:center;background:url('https://i.ibb.co/0B0Y2YF/one-piece-bg.jpg') center/cover no-repeat;background-size:cover;color:gold;}
 h1{margin-top:20px;text-shadow:2px 2px black;}
-button{margin:10px;padding:15px;font-size:20px;background:rgba(0,0,0,0.5);color:gold;border:2px solid gold;border-radius:10px;cursor:pointer;}
-#result{margin-top:20px;font-size:24px;}
+button{margin:10px;padding:10px 20px;font-size:20px;border:2px solid gold;border-radius:8px;background:rgba(0,0,0,0.6);color:gold;cursor:pointer;}
+button:hover{background:gold;color:black;}
+#result{margin-top:20px;font-size:24px;font-weight:bold;}
 </style>
 </head>
 <body>
-<h1>One Piece Rock Paper Scissors</h1>
+<h1>✊✋✌️ Rock Paper Scissors</h1>
 <button onclick="play('rock')">Rock</button>
 <button onclick="play('paper')">Paper</button>
 <button onclick="play('scissors')">Scissors</button>
 <div id="result"></div>
 <script>
-function play(user){let choices=['rock','paper','scissors'];let comp=choices[Math.floor(Math.random()*3)];let r='';
-if(user===comp)r='Draw!';else if((user==='rock'&&comp==='scissors')||(user==='scissors'&&comp==='paper')||(user==='paper'&&comp==='rock'))r='You Win!';else r='You Lose!';
-document.getElementById('result').innerText='Computer chose '+comp+'. '+r;}
+function play(user){
+let choices=['rock','paper','scissors'];
+let computer=choices[Math.floor(Math.random()*3)];
+let res='';
+if(user===computer)res='Draw!';
+else if((user==='rock'&&computer==='scissors')||(user==='paper'&&computer==='rock')||(user==='scissors'&&computer==='paper'))res='You Win!';
+else res='Computer Wins!';
+document.getElementById('result').innerHTML=`You: ${user}<br>Computer: ${computer}<br>${res}`;
+}
 </script>
 </body>
 </html>
+
+
