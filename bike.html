@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>One Piece Bike Game</title>
 <style>
-body {margin:0;overflow:hidden;background:url('https://i.ibb.co/0B0Y2YF/one-piece-bg.jpg') center/cover no-repeat;}
+body{margin:0;overflow:hidden;background:url('https://i.ibb.co/0B0Y2YF/one-piece-bg.jpg') center/cover no-repeat;background-size:cover;}
 #gameCanvas{display:block;margin:0 auto;border:3px solid gold;border-radius:15px;background-color:rgba(255,255,255,0.1);}
 #score{position:absolute;top:10px;left:50%;transform:translateX(-50%);color:gold;font-size:24px;font-weight:bold;}
 </style>
@@ -14,18 +14,34 @@ body {margin:0;overflow:hidden;background:url('https://i.ibb.co/0B0Y2YF/one-piec
 <div id="score">Score: 0</div>
 <canvas id="gameCanvas" width="400" height="600"></canvas>
 <script>
-const canvas=document.getElementById('gameCanvas');const ctx=canvas.getContext('2d');
-let bike={x:canvas.width/2-25,y:canvas.height-120,width:50,height:100,speed:7,img:new Image()};
-bike.img.src='https://i.ibb.co/c8CNr6t/luffy-bike.png';
+const canvas=document.getElementById('gameCanvas'),ctx=canvas.getContext('2d');
+let bike={x:175,y:480,width:50,height:100,speed:10,img:new Image()};
+bike.img.src='https://i.ibb.co/6FsfGqT/luffy-bike.png';
 let obstacles=[],score=0,gameOver=false;
-document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'&&bike.x>0)bike.x-=bike.speed;if(e.key==='ArrowRight'&&bike.x+bike.width<canvas.width)bike.x+=bike.speed;});
-function spawnObstacle(){let w=Math.random()*60+40;let x=Math.random()*(canvas.width-w);obstacles.push({x:x,y:-100,width:w,height:100,speed:6});}
-function update(){if(gameOver)return;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(bike.img,bike.x,bike.y,bike.width,bike.height);
-for(let i=0;i<obstacles.length;i++){let o=obstacles[i];o.y+=o.speed;ctx.fillStyle='blue';ctx.fillRect(o.x,o.y,o.width,o.height);
-if(bike.x<o.x+o.width&&bike.x+bike.width>o.x&&bike.y<o.y+o.height&&bike.y+bike.height>o.y){gameOver=true;document.getElementById('score').innerText="Game Over! Score: "+score;return;}
-if(o.y>canvas.height){obstacles.splice(i,1);score++;document.getElementById('score').innerText="Score: "+score;i--;}}
-requestAnimationFrame(update);}
-setInterval(spawnObstacle,1200);update();
+let left=false,right=false;
+
+document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')left=true;if(e.key==='ArrowRight')right=true;});
+document.addEventListener('keyup',e=>{if(e.key==='ArrowLeft')left=false;if(e.key==='ArrowRight')right=false;});
+
+function spawnObstacle(){let w=Math.random()*60+40; let x=Math.random()*(canvas.width-w); obstacles.push({x:x,y:-100,width:w,height:100,speed:6});}
+
+function update(){
+    if(gameOver)return;
+    if(left&&bike.x>0)bike.x-=bike.speed;
+    if(right&&bike.x+bike.width<canvas.width)bike.x+=bike.speed;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(bike.img,bike.x,bike.y,bike.width,bike.height);
+    for(let i=0;i<obstacles.length;i++){
+        let o=obstacles[i]; o.y+=o.speed; ctx.fillStyle='blue'; ctx.fillRect(o.x,o.y,o.width,o.height);
+        if(bike.x<o.x+o.width && bike.x+bike.width>o.x && bike.y<o.y+o.height && bike.y+bike.height>o.y){
+            gameOver=true; document.getElementById('score').innerText="Game Over! Score: "+score; return;
+        }
+        if(o.y>canvas.height){obstacles.splice(i,1);score++; document.getElementById('score').innerText="Score: "+score; i--; }
+    }
+    requestAnimationFrame(update);
+}
+setInterval(spawnObstacle,1200); update();
 </script>
 </body>
 </html>
+
