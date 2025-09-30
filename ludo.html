@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>One Piece Ludo</title>
 <style>
-body{margin:0;font-family:Arial;text-align:center;background:url('https://i.ibb.co/0B0Y2YF/one-piece-bg.jpg') center/cover no-repeat;background-size:cover;color:gold;}
+body{margin:0;font-family:Arial;text-align:center;background:url('one-piece-bg.jpg') center/cover no-repeat;background-size:cover;color:gold;}
 h1{margin-top:20px;text-shadow:2px 2px black;}
 button{margin:10px;padding:10px 20px;font-size:20px;border:2px solid gold;border-radius:8px;background:rgba(0,0,0,0.6);color:gold;cursor:pointer;}
 #dice,#pos{margin-top:20px;font-size:24px;font-weight:bold;}
@@ -16,14 +16,18 @@ button{margin:10px;padding:10px 20px;font-size:20px;border:2px solid gold;border
 <button onclick="roll()">Roll Dice</button>
 <div id="dice">Dice: -</div>
 <div id="pos">Position: 0</div>
+<button onclick="location.reload()">Restart Game</button>
 <script>
 let pos=0;
 function roll(){
 let d=Math.floor(Math.random()*6)+1; pos+=d; if(pos>100)pos=100;
 document.getElementById('dice').innerText='Dice: '+d;
 document.getElementById('pos').innerText='Position: '+pos;
-if(pos===100)alert('You Win!');}
+if(pos===100)alert('You Win!');
+}
 </script>
 </body>
 </html>
+
+
 
