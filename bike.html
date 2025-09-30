@@ -8,41 +8,59 @@
 body{margin:0;overflow:hidden;background:url('one-piece-bg.jpg') center/cover no-repeat;background-size:cover;}
 #gameCanvas{display:block;margin:0 auto;border:3px solid gold;border-radius:15px;background-color:rgba(255,255,255,0.1);}
 #score{position:absolute;top:10px;left:50%;transform:translateX(-50%);color:gold;font-size:24px;font-weight:bold;}
-button{padding:10px 20px;font-size:18px;margin-top:10px;border:2px solid gold;border-radius:8px;cursor:pointer;}
+button{padding:15px 25px;font-size:24px;margin:5px;border:2px solid gold;border-radius:12px;cursor:pointer;}
 </style>
 </head>
 <body>
 <div id="score">Score: 0</div>
 <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+<!-- Mobile controls -->
+<div style="text-align:center; margin-top:10px;">
+<button id="leftBtn">⬅️ Left</button>
+<button id="rightBtn">➡️ Right</button>
+</div>
+
 <script>
 const canvas=document.getElementById('gameCanvas'),ctx=canvas.getContext('2d');
 let bike={x:175,y:480,width:50,height:100,speed:10,img:new Image()};
-bike.img.src='luffy-bike.png'; // Local image
+bike.img.src='luffy-bike.png';
 let obstacles=[],score=0,gameOver=false;
 let left=false,right=false;
+
+// Keyboard controls
 document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')left=true;if(e.key==='ArrowRight')right=true;});
 document.addEventListener('keyup',e=>{if(e.key==='ArrowLeft')left=false;if(e.key==='ArrowRight')right=false;});
+
+// Mobile touch controls
+document.getElementById('leftBtn').addEventListener('touchstart',()=>{left=true;});
+document.getElementById('leftBtn').addEventListener('touchend',()=>{left=false;});
+document.getElementById('rightBtn').addEventListener('touchstart',()=>{right=true;});
+document.getElementById('rightBtn').addEventListener('touchend',()=>{right=false;});
+
 function spawnObstacle(){let w=Math.random()*60+40; let x=Math.random()*(canvas.width-w); obstacles.push({x:x,y:-100,width:w,height:100,speed:6});}
 function update(){
-    if(gameOver)return;
-    if(left&&bike.x>0)bike.x-=bike.speed;
-    if(right&&bike.x+bike.width<canvas.width)bike.x+=bike.speed;
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    ctx.drawImage(bike.img,bike.x,bike.y,bike.width,bike.height);
-    for(let i=0;i<obstacles.length;i++){
-        let o=obstacles[i]; o.y+=o.speed; ctx.fillStyle='blue'; ctx.fillRect(o.x,o.y,o.width,o.height);
-        if(bike.x<o.x+o.width && bike.x+bike.width>o.x && bike.y<o.y+o.height && bike.y+bike.height>o.y){
-            gameOver=true;
-            document.getElementById('score').innerHTML="Game Over! Score: "+score+"<br><button onclick='location.reload()'>Restart</button>";
-            return;
-        }
-        if(o.y>canvas.height){obstacles.splice(i,1);score++; document.getElementById('score').innerText="Score: "+score;i--;}
+if(gameOver)return;
+if(left&&bike.x>0)bike.x-=bike.speed;
+if(right&&bike.x+bike.width<canvas.width)bike.x+=bike.speed;
+ctx.clearRect(0,0,canvas.width,canvas.height);
+ctx.drawImage(bike.img,bike.x,bike.y,bike.width,bike.height);
+for(let i=0;i<obstacles.length;i++){
+    let o=obstacles[i]; o.y+=o.speed; ctx.fillStyle='blue'; ctx.fillRect(o.x,o.y,o.width,o.height);
+    if(bike.x<o.x+o.width && bike.x+bike.width>o.x && bike.y<o.y+o.height && bike.y+bike.height>o.y){
+        gameOver=true;
+        document.getElementById('score').innerHTML="Game Over! Score: "+score+"<br><button onclick='location.reload()'>Restart</button>";
+        return;
     }
-    requestAnimationFrame(update);
+    if(o.y>canvas.height){obstacles.splice(i,1);score++;document.getElementById('score').innerText="Score: "+score;i--;}
 }
-setInterval(spawnObstacle,1200); update();
+requestAnimationFrame(update);
+}
+setInterval(spawnObstacle,1200);update();
 </script>
 </body>
 </html>
+
+
 
 
