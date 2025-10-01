@@ -3,31 +3,165 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>One Piece Ludo</title>
+<title>🎲 One Piece Ludo</title>
 <style>
-body{margin:0;font-family:Arial;text-align:center;background:url('one-piece-bg.jpg') center/cover no-repeat;background-size:cover;color:gold;}
-h1{margin-top:20px;text-shadow:2px 2px black;}
-button{margin:10px;padding:10px 20px;font-size:20px;border:2px solid gold;border-radius:8px;background:rgba(0,0,0,0.6);color:gold;cursor:pointer;}
-#dice,#pos{margin-top:20px;font-size:24px;font-weight:bold;}
+body {
+  margin: 0;
+  font-family: "Treasure Map Deadhand", cursive, Arial;
+  text-align: center;
+  background: url('one-piece-bg.jpg') center/cover no-repeat;
+  color: gold;
+}
+h1 {
+  margin: 10px;
+  text-shadow: 2px 2px black;
+}
+#game {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+canvas {
+  background: rgba(0,0,0,0.6);
+  border: 4px solid gold;
+  border-radius: 12px;
+  max-width: 95vw;
+  max-height: 80vh;
+}
+#controls {
+  margin-top: 15px;
+}
+button {
+  margin: 8px;
+  padding: 10px 18px;
+  font-size: 18px;
+  border: 2px solid gold;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.7);
+  color: gold;
+  cursor: pointer;
+}
+button:hover {
+  background: gold;
+  color: black;
+}
+#dice {
+  font-size: 28px;
+  margin-top: 10px;
+  font-weight: bold;
+  text-shadow: 2px 2px black;
+}
+#timer {
+  font-size: 20px;
+  margin-top: 8px;
+}
+@keyframes diceRoll {
+  0% { transform: rotate(0); }
+  25% { transform: rotate(90deg); }
+  50% { transform: rotate(180deg); }
+  75% { transform: rotate(270deg); }
+  100% { transform: rotate(360deg); }
+}
+.dice-anim {
+  animation: diceRoll 0.8s linear;
+}
 </style>
 </head>
 <body>
-<h1>🎲 Ludo</h1>
-<button onclick="roll()">Roll Dice</button>
+<h1>🎴 One Piece Ludo 🎴</h1>
+<div id="game">
+  <canvas id="board" width="500" height="500"></canvas>
+</div>
+<div id="controls">
+  <button onclick="rollDice()">🎲 Roll Dice</button>
+  <button onclick="restartGame()">🔄 Restart</button>
+</div>
 <div id="dice">Dice: -</div>
-<div id="pos">Position: 0</div>
-<button onclick="location.reload()">Restart Game</button>
+<div id="timer">Timer: 45s</div>
+
+<audio id="rollSound" src="roll.mp3"></audio>
+<audio id="captureSound" src="capture.mp3"></audio>
+<audio id="finishSound" src="finish.mp3"></audio>
+
 <script>
-let pos=0;
-function roll(){
-let d=Math.floor(Math.random()*6)+1; pos+=d; if(pos>100)pos=100;
-document.getElementById('dice').innerText='Dice: '+d;
-document.getElementById('pos').innerText='Position: '+pos;
-if(pos===100)alert('You Win!');
+// 🎲 Basic setup
+const canvas = document.getElementById("board");
+const ctx = canvas.getContext("2d");
+
+let currentPlayer = 0; // 0–3
+let players = 4; // default 4 players
+let pawns = []; // [player][pawn index]
+let diceValue = null;
+let timer = 45;
+let timerInterval;
+
+// 🟨 Player colors (One Piece vibe)
+const colors = ["red","blue","green","yellow"];
+const names = ["Luffy","Zoro","Sanji","Nami"];
+
+// 🎵 Sounds
+const rollSound = document.getElementById("rollSound");
+const captureSound = document.getElementById("captureSound");
+const finishSound = document.getElementById("finishSound");
+
+// 🎯 Draw board
+function drawBoard() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = "rgba(0,0,0,0.5)";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.strokeStyle = "gold";
+  ctx.strokeRect(10,10,480,480);
+  // TODO: Add Ludo track squares (simplified for now)
+  ctx.fillStyle="white";
+  ctx.font="20px Arial";
+  ctx.fillText("One Piece Ludo (Prototype)",120,250);
 }
+
+// 🎲 Roll dice
+function rollDice() {
+  diceValue = Math.floor(Math.random()*6)+1;
+  document.getElementById("dice").innerText = "Dice: " + diceValue;
+  const diceBox = document.getElementById("dice");
+  diceBox.classList.add("dice-anim");
+  setTimeout(()=>diceBox.classList.remove("dice-anim"),800);
+  rollSound.play();
+  resetTimer();
+  // TODO: let player move pawns based on diceValue
+}
+
+// ⏳ Timer
+function resetTimer() {
+  clearInterval(timerInterval);
+  timer = 45;
+  document.getElementById("timer").innerText="Timer: "+timer+"s";
+  timerInterval=setInterval(()=>{
+    timer--;
+    document.getElementById("timer").innerText="Timer: "+timer+"s";
+    if(timer<=0){
+      clearInterval(timerInterval);
+      nextTurn();
+    }
+  },1000);
+}
+
+// 🔄 Restart
+function restartGame() {
+  currentPlayer = 0;
+  diceValue = null;
+  document.getElementById("dice").innerText="Dice: -";
+  drawBoard();
+  resetTimer();
+}
+
+// 👥 Next turn
+function nextTurn(){
+  currentPlayer = (currentPlayer+1)%players;
+  resetTimer();
+}
+
+// 🎮 Start
+drawBoard();
+resetTimer();
 </script>
 </body>
 </html>
-
-
-
