@@ -12,7 +12,7 @@
   .card{background:rgba(0,0,0,0.75);border-radius:10px;padding:14px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 10px 30px rgba(0,0,0,0.6);}
   .topbar{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
   .viewers{font-weight:800;color:#60a5fa;background:rgba(255,255,255,0.02);padding:6px 10px;border-radius:8px;}
-  .terminal{background:#000;padding:12px;border-radius:8px;color:#6aff6a;height:400px;overflow:auto;font-size:13px;line-height:1.35;white-space:pre-wrap;}
+  .terminal{background:#000;padding:12px;border-radius:8px;color:#6aff6a;height:420px;overflow:auto;font-size:13px;line-height:1.35;white-space:pre-wrap;}
   .controls{display:flex;gap:8px;margin-top:12px;align-items:center;}
   .text-input{flex:1;padding:10px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:#07111b;color:#e6eef8;font-family:Inter, system-ui, monospace;}
   .btn{padding:8px 12px;background:linear-gradient(90deg,#f59e0b,#fcd34d);border-radius:8px;border:0;font-weight:700;cursor:pointer;color:#000;}
@@ -71,7 +71,7 @@
   </div>
 
 <script>
-/* ==================== Generators ==================== */
+/* ==================== Harmless generators ==================== */
 const HEX = (len=8) => Math.random().toString(16).slice(2, 2+len).toUpperCase();
 const BASE64 = (len=12) => btoa(Math.random().toString(36)).slice(0,len);
 const RANDMSG = () => {
@@ -80,7 +80,7 @@ const RANDMSG = () => {
 };
 const NAMES = ['Luffy','Zoro','Nami','Usopp','Sanji','Robin','Franky','Brook','Jinbe','Shanks','Ace'];
 
-/* UI */
+/* UI refs */
 const terminal = document.getElementById('terminal');
 const viewersEl = document.getElementById('viewers');
 const input = document.getElementById('targetInput');
@@ -91,12 +91,16 @@ const progressBar = document.getElementById('progressBar');
 const percentText = document.getElementById('percentText');
 const etaText = document.getElementById('etaText');
 
-/* Terminal append */
-function appendLine(text){
-  const d = document.createElement('div'); d.textContent=text; terminal.appendChild(d); terminal.scrollTop=terminal.scrollHeight;
+/* append safely */
+function appendLine(text) {
+  const d = document.createElement('div');
+  d.textContent = text;
+  terminal.appendChild(d);
+  terminal.scrollTop = terminal.scrollHeight;
 }
 
-function makeLogLine(target){
+/* produce a plausible looking harmless log line */
+function makeLogLine(target) {
   const t = new Date().toISOString().replace('T',' ').slice(0,19);
   const templates = [
     `[${t}] INFO  -> connect(${target || 'unknown'})`,
@@ -112,85 +116,156 @@ function makeLogLine(target){
   return templates[Math.floor(Math.random()*templates.length)];
 }
 
-/* Viewer simulation */
+/* viewer simulation (random walk) */
 let viewers = Math.floor(Math.random()*300)+200;
-function tickViewers(){viewers += Math.floor(Math.random()*11)-5;if(viewers<50)viewers=50;viewersEl.textContent="VIEWERS "+viewers;}
-setInterval(tickViewers,2500); tickViewers();
+function tickViewers() {
+  viewers += Math.floor(Math.random()*11)-5;
+  if (viewers < 50) viewers = 50;
+  viewersEl.textContent = "VIEWERS " + viewers;
+}
+setInterval(tickViewers, 2500);
+tickViewers();
 
-/* ==================== Bulk generation + progress + ETA ==================== */
-function generateBulkLogs(target,totalLines=1000){
-  const out=new Array(totalLines);
-  for(let i=0;i<totalLines;i++){
-    const r=Math.random();
-    if(r<0.06){out[i]=`--- PACKET DUMP ${i} --- ${HEX(12)} ${BASE64(18)} ${RANDMSG()}`;}
-    else if(r<0.12){out[i]=`${new Date().toISOString().slice(0,19)} CRIT  -> anomaly:${HEX(8)} severity=${Math.floor(Math.random()*10)+1}`;}
-    else if(r<0.22){out[i]=`${new Date().toISOString().slice(0,19)} DATA  -> segment[${i}] header=${BASE64(10)} len=${Math.floor(Math.random()*4096)}`;}
-    else if(r<0.40){out[i]=makeLogLine(target);}
-    else{out[i]=`${new Date().toISOString().slice(0,19)} INFO  -> tick ${i} id=${HEX(6)}`;}
+/* ==================== Bulk logs generator (2000) + slower append ==================== */
+
+function generateBulkLogs(target, totalLines=2000) {
+  const out = new Array(totalLines);
+  for (let i = 0; i < totalLines; i++) {
+    const r = Math.random();
+    if (r < 0.06) {
+      out[i] = `--- PACKET DUMP ${i} --- ${HEX(12)} ${BASE64(18)} ${RANDMSG()}`;
+    } else if (r < 0.12) {
+      out[i] = `${new Date().toISOString().slice(0,19)} CRIT  -> anomaly:${HEX(8)} severity=${Math.floor(Math.random()*10)+1}`;
+    } else if (r < 0.22) {
+      out[i] = `${new Date().toISOString().slice(0,19)} DATA  -> segment[${i}] header=${BASE64(10)} len=${Math.floor(Math.random()*4096)}`;
+    } else if (r < 0.40) {
+      out[i] = makeLogLine(target);
+    } else {
+      out[i] = `${new Date().toISOString().slice(0,19)} INFO  -> tick ${i} id=${HEX(6)}`;
+    }
   }
   return out;
 }
 
-function appendLinesInChunks(lines,chunk=60,onDone){
-  let index=0; const total=lines.length;
-  const startTime=Date.now();
-  function step(){
-    const end=Math.min(index+chunk,total);
-    for(let i=index;i<end;i++) appendLine(lines[i]);
-    index=end;
-    const pct=index/total; const pctDisplay=Math.round(pct*100);
-    progressBar.style.width=pctDisplay+'%'; percentText.textContent=pctDisplay+'%';
+/*
+  appendLinesInChunks: append in small batches and pause slightly between batches
+  to slow the display so viewers can read. Uses requestAnimationFrame but with a
+  setTimeout between frames to reduce speed by approx 50%.
+*/
+function appendLinesInChunks(lines, chunk=40, pauseMs=40, onDone) {
+  let index = 0;
+  const total = lines.length;
+  const startTime = Date.now();
+
+  function step() {
+    const end = Math.min(index + chunk, total);
+    for (let i = index; i < end; i++) appendLine(lines[i]);
+    index = end;
+
+    // update progress & ETA
+    const pct = index / total;
+    const pctDisplay = Math.round(pct * 100);
+    progressBar.style.width = pctDisplay + '%';
+    percentText.textContent = pctDisplay + '%';
     updateStatusByPercent(pct);
 
-    // ETA calculation
-    const elapsed=(Date.now()-startTime)/1000;
-    const remaining=Math.max(0,Math.round(elapsed*(1-pct)/pct));
-    etaText.textContent='ETA: '+remaining+'s';
+    const elapsed = (Date.now() - startTime)/1000;
+    const remaining = pct > 0 ? Math.max(0, Math.round(elapsed*(1-pct)/pct)) : '-';
+    etaText.textContent = 'ETA: ' + (remaining === '-' ? '??s' : remaining + 's');
 
-    if(index<total) requestAnimationFrame(step); else {if(onDone) onDone();}
+    if (index < total) {
+      // slower pacing: request next frame after a small pause
+      setTimeout(() => requestAnimationFrame(step), pauseMs);
+    } else {
+      if (onDone) onDone();
+    }
   }
+
   requestAnimationFrame(step);
 }
 
-function updateStatusByPercent(pct){
-  let txt='IDLE';
-  if(pct<0.03) txt='INITIALIZING';
-  else if(pct<0.25) txt='SYNCHING NODES';
-  else if(pct<0.80) txt='STREAMING LOGS';
-  else if(pct<0.98) txt='FINALIZING';
-  else txt='COMPLETE';
-  statusText.innerHTML=`<div class="spinner"></div> ${txt}`;
+/* status text by percent */
+function updateStatusByPercent(pct) {
+  if (pct < 0.03) statusText.innerHTML = `<div class="spinner"></div> INITIALIZING`;
+  else if (pct < 0.25) statusText.innerHTML = `<div class="spinner"></div> SYNCHING NODES`;
+  else if (pct < 0.80) statusText.innerHTML = `<div class="spinner"></div> STREAMING LOGS`;
+  else if (pct < 0.98) statusText.innerHTML = `<div class="spinner"></div> FINALIZING`;
+  else statusText.innerHTML = `<div class="spinner"></div> COMPLETE`;
 }
 
-function runLargeSimulation(target){
-  runBtn.disabled=true; input.disabled=true; noteEl.textContent='Streaming output...';
-  terminal.innerHTML=''; progressBar.style.width='0%'; percentText.textContent='0%'; etaText.textContent='ETA: 0s'; updateStatusByPercent(0);
-  typeOut(`-- initializing console for ${target} --`,6,()=>{
-    appendLine('handshake -> OK'); appendLine(`allocating mirror streams: ${HEX(10)}`); appendLine('syncing nodes...'); appendLine('spawning observers...');
-    const bulk=generateBulkLogs(target,1000);
-    appendLinesInChunks(bulk,70,()=>{
+/* typed intro slower: delay doubled from earlier 6ms -> 12ms */
+function typeOut(text, delay=12, cb) {
+  let i = 0;
+  const el = document.createElement('div');
+  terminal.appendChild(el);
+  terminal.scrollTop = terminal.scrollHeight;
+  const t = setInterval(()=> {
+    el.textContent = text.slice(0, ++i);
+    terminal.scrollTop = terminal.scrollHeight;
+    if (i >= text.length) { clearInterval(t); if (cb) cb(); }
+  }, delay);
+}
+
+/* runLargeSimulation: orchestration */
+function runLargeSimulation(target) {
+  runBtn.disabled = true;
+  input.disabled = true;
+  noteEl.textContent = 'Streaming output...';
+  terminal.innerHTML = '';
+  progressBar.style.width = '0%';
+  percentText.textContent = '0%';
+  etaText.textContent = 'ETA: 0s';
+  updateStatusByPercent(0);
+
+  typeOut(`-- initializing console for ${target} --`, 12, () => {
+    appendLine('handshake -> OK');
+    appendLine(`allocating mirror streams: ${HEX(10)}`);
+    appendLine('syncing nodes...');
+    appendLine('spawning observers...');
+
+    // generate 2000 lines (slower and larger)
+    const bulk = generateBulkLogs(target, 2000);
+
+    // append in smaller chunks with a short pause to slow the output (50% approx)
+    appendLinesInChunks(bulk, 40, 40, () => {
+      // final memory dumps and finish
       appendLine('--- memory-dump START ---');
-      for(let i=0;i<8;i++) appendLine(`0x${HEX(8)}  ${BASE64(12)}  ${RANDMSG()}`);
+      for (let i = 0; i < 8; i++) appendLine(`0x${HEX(8)}  ${BASE64(12)}  ${RANDMSG()}`);
       appendLine('--- memory-dump END ---');
       appendLine(`[${new Date().toISOString().slice(0,19)}] COMPLETE -> REPORT READY`);
-      viewers+=Math.floor(Math.random()*300)+100; viewersEl.textContent="VIEWERS "+viewers;
-      progressBar.style.width='100%'; percentText.textContent='100%'; etaText.textContent='ETA: 0s'; updateStatusByPercent(1);
-      runBtn.disabled=false; input.disabled=false; noteEl.textContent='Output streaming — visual only';
+
+      // viewer spike for realism
+      viewers += Math.floor(Math.random()*300)+100;
+      viewersEl.textContent = "VIEWERS " + viewers;
+
+      // finalize UI
+      progressBar.style.width = '100%';
+      percentText.textContent = '100%';
+      etaText.textContent = 'ETA: 0s';
+      updateStatusByPercent(1);
+
+      runBtn.disabled = false;
+      input.disabled = false;
+      noteEl.textContent = 'Output streaming — visual only';
     });
   });
 }
 
-function typeOut(text,delay=12,cb){let i=0;const el=document.createElement('div');terminal.appendChild(el);terminal.scrollTop=terminal.scrollHeight;const t=setInterval(()=>{el.textContent=text.slice(0,++i);terminal.scrollTop=terminal.scrollHeight;if(i>=text.length){clearInterval(t);if(cb)cb();}},delay);}
+/* bind UI */
+runBtn.onclick = ()=> {
+  const t = (input.value.trim() || 'StrawHatBank');
+  runLargeSimulation(t);
+};
+input.addEventListener('keydown', e => { if (e.key === 'Enter') runBtn.click(); });
 
-runBtn.onclick=()=>{const t=(input.value.trim()||'StrawHatBank');runLargeSimulation(t);};
-input.addEventListener('keydown',e=>{if(e.key==='Enter') runBtn.click();});
-
-/* seed passive feed */
+/* seed passive feed so the page looks live initially */
 (function seedFeed(){
-  const seedTarget='strawhat-core';
+  const seedTarget = 'strawhat-core';
   appendLine(`-- passive connection observed to ${seedTarget} --`);
-  for(let i=0;i<6;i++){setTimeout(()=>appendLine(makeLogLine(seedTarget)),400+i*420);}
-  setTimeout(()=>appendLine('-- passive feed active --'),3200);
+  for (let i=0;i<6;i++){
+    setTimeout(()=> appendLine(makeLogLine(seedTarget)), 400 + i*420);
+  }
+  setTimeout(()=> appendLine('-- passive feed active --'), 3200);
 })();
 </script>
 </body>
