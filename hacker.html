@@ -1,56 +1,174 @@
-<!-- ==================== Hacker Page (hacker.html) ==================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>One Piece Hacker</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>One Piece — Console</title>
 <style>
-body{margin:0;font-family:Inter, system-ui, sans-serif;background:linear-gradient(180deg,#071029,#071a2a);color:#e6eef8;}
-a{color:#fbbf24;text-decoration:none;}
-.nav{display:flex;gap:12px;padding:16px;background:rgba(0,0,0,0.6);}
-.nav a{padding:8px 14px;background:linear-gradient(90deg,#f59e0b,#fcd34d);border-radius:8px;font-weight:600;transition:0.2s;}
-.nav a:hover{opacity:0.85;}
-.wrap{max-width:980px;margin:24px auto;padding:16px;}
-.card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:18px;box-shadow:0 6px 20px rgba(0,0,0,0.6);}
-.scene-title{font-size:20px;font-weight:700;margin:0 0 8px 0;}
-.scene-text{line-height:1.5;color:#cbd5e1;margin-bottom:12px;}
-.terminal{background:#000;color:#33ff66;padding:16px;border-radius:8px;height:320px;overflow:auto;font-family:monospace;font-size:13px;margin-bottom:12px;}
-.input-row{display:flex;gap:8px;margin-top:12px;}
-.text-input{flex:1;padding:10px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:#07111b;color:#e6eef8;}
-.btn{padding:8px 14px;background:linear-gradient(90deg,#f59e0b,#fcd34d);border:none;border-radius:8px;font-weight:600;cursor:pointer;transition:0.2s;}
-.btn:hover{opacity:0.85;}
-.small-muted{font-size:13px;color:#94a3b8;}
+  body{margin:0;font-family:Inter, system-ui, monospace;background:linear-gradient(180deg,#071029,#071a2a);color:#e6eef8;}
+  .nav{display:flex;gap:12px;padding:14px;background:rgba(0,0,0,0.55);}
+  .nav a{padding:8px 12px;background:linear-gradient(90deg,#f59e0b,#fcd34d);border-radius:8px;color:#000;font-weight:700;text-decoration:none;}
+  .wrap{max-width:980px;margin:24px auto;padding:18px;}
+  .card{background:rgba(0,0,0,0.75);border-radius:10px;padding:14px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 10px 30px rgba(0,0,0,0.6);}
+  .topbar{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+  .viewers{font-weight:800;color:#60a5fa;background:rgba(255,255,255,0.02);padding:6px 10px;border-radius:8px;}
+  .terminal{background:#000;padding:12px;border-radius:8px;color:#6aff6a;height:360px;overflow:auto;font-size:13px;line-height:1.35;white-space:pre-wrap;}
+  .controls{display:flex;gap:8px;margin-top:12px;align-items:center;}
+  .text-input{flex:1;padding:10px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:#07111b;color:#e6eef8;font-family:Inter, system-ui, monospace;}
+  .btn{padding:8px 12px;background:linear-gradient(90deg,#f59e0b,#fcd34d);border-radius:8px;border:0;font-weight:700;cursor:pointer;color:#000;}
+  .muted{color:#94a3b8;font-size:13px;margin-left:6px;}
+  .blink{display:inline-block;width:9px;height:14px;background:#6aff6a;margin-left:6px;animation:blink 1s steps(2) infinite;vertical-align:middle;}
+  @keyframes blink{50%{opacity:.1}}
 </style>
 </head>
 <body>
-<div class="nav">
-<a href="index.html">Home</a>
-<a href="adventure.html">Adventure</a>
-<a href="hacker.html">Hacker</a>
-</div>
-<div class="wrap">
-<div class="card">
-<h2 class="scene-title">Fake Hacker Console</h2>
-<div class="scene-text small-muted">Type something and press RUN to simulate hacking.</div>
-<div class="terminal" id="terminal"></div>
-<div class="input-row">
-<input id="hackInput" class="text-input" placeholder="Type target and press RUN" />
-<button id="hackBtn" class="btn">RUN</button>
-</div>
-<div style="margin-top:10px;color:#94a3b8;font-size:13px">Note: This is purely visual & safe for pranks.</div>
-</div>
-</div>
+  <div class="nav">
+    <a href="index.html">Home</a>
+    <a href="adventure.html">Adventure</a>
+    <a href="hacker.html">Console</a>
+  </div>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="topbar">
+        <div style="font-weight:800;color:#fbbf24;">LIVE CONSOLE</div>
+        <div class="viewers" id="viewers">VIEWERS 0</div>
+        <div class="muted">CHANNEL: STRAWHAT_NET</div>
+        <div style="flex:1"></div>
+        <div class="muted">STATUS: SYNCHRONIZED <span class="blink"></span></div>
+      </div>
+
+      <div id="terminal" class="terminal"></div>
+
+      <div class="controls">
+        <input id="targetInput" class="text-input" placeholder="Enter target name (e.g. StrawHatBank)">
+        <button id="runBtn" class="btn">RUN</button>
+        <div class="muted">Output streaming — no real actions performed</div>
+      </div>
+    </div>
+  </div>
+
 <script>
-const terminal=document.getElementById('terminal');
-const input=document.getElementById('hackInput');
-const btn=document.getElementById('hackBtn');
-function appendLine(text){const div=document.createElement('div');div.textContent=text;terminal.appendChild(div);terminal.scrollTop=terminal.scrollHeight;}
-function clear(){terminal.innerHTML='';}
-function runFake(target){clear();const seq=[`Initializing breach simulation for "${target}"...`,'Establishing secure channel... DONE','Enumerating services...','- authsvc','- datastream','- logs','Bypassing firewall...','Injecting chaos packets [██████░░] 75%','Extracting secret: FLAG{ONE-PIECE-4EVER}','Deploying reverse-shell (visual only)...','ACCESS GRANTED — Welcome Captain.','Closing simulation. Have a nice raid.'];seq.forEach((text,i)=>setTimeout(()=>appendLine(text),i*600));}
-btn.onclick=()=>{runFake(input.value.trim()||'StrawHatBank');};
-input.addEventListener('keydown',e=>{if(e.key==='Enter') runFake(input.value.trim()||'StrawHatBank');});
-appendLine('Fake Hacker Console ready. Type target and press RUN.');
+/* Helper: random items for convincing-but-harmless logs */
+const HEX = () => Math.random().toString(16).slice(2, 10).toUpperCase();
+const BASE64 = () => btoa(Math.random().toString(36)).slice(0,12);
+const GIBBER = () => ['ERR_0x'+HEX(),'AUTH_TOKEN[REDACTED]','MSG_QUEUE_OVERFLOW','SEGFAULT@0x'+HEX(),'PAYLOAD_STUB','IDX_CORRUPT','SYNC_LOST','TRACE_OK'][Math.floor(Math.random()*8)];
+const NAMES = ['Luffy','Zoro','Nami','Usopp','Sanji','Robin','Franky','Brook','Jinbe'];
+
+/* Terminal UI */
+const terminal = document.getElementById('terminal');
+const viewersEl = document.getElementById('viewers');
+const input = document.getElementById('targetInput');
+const runBtn = document.getElementById('runBtn');
+
+function appendLine(text, cls) {
+  const d = document.createElement('div');
+  d.textContent = text;
+  terminal.appendChild(d);
+  terminal.scrollTop = terminal.scrollHeight;
+}
+
+/* Live-sim: viewers count that fluctuates */
+let viewers = Math.floor(Math.random()*300)+200;
+function tickViewers() {
+  // small random walk
+  viewers += Math.floor(Math.random()*11)-5;
+  if (viewers < 50) viewers = 50;
+  viewersEl.textContent = "VIEWERS " + viewers;
+}
+setInterval(tickViewers, 2500);
+tickViewers();
+
+/* Create a plausible-looking log line */
+function makeLogLine(target) {
+  const t = new Date().toISOString().replace('T',' ').slice(0,19);
+  const parts = [
+    `[${t}] INFO  -> connect(${target || 'unknown'})`,
+    `[${t}] TRACE -> sessionId=${HEX()} user=${NAMES[Math.floor(Math.random()*NAMES.length)]}`,
+    `[${t}] DATA  -> header:${BASE64()}`,
+    `[${t}] WARN  -> ${GIBBER()} code=${Math.floor(Math.random()*9000)+1000}`,
+    `[${t}] DUMP  -> 0x${HEX()} 0x${HEX()} 0x${HEX()}`,
+    `[${t}] FLUX  -> stream(${Math.floor(Math.random()*9999)})`,
+    `[${t}] NOTE  -> meta:${BASE64()}`,
+  ];
+  return parts[Math.floor(Math.random()*parts.length)];
+}
+
+/* Visual "typed" output helper */
+function typeOut(text, delay, cb) {
+  let i = 0;
+  const el = document.createElement('div');
+  terminal.appendChild(el);
+  terminal.scrollTop = terminal.scrollHeight;
+  const t = setInterval(()=> {
+    el.textContent = text.slice(0, ++i);
+    terminal.scrollTop = terminal.scrollHeight;
+    if (i >= text.length) { clearInterval(t); if (cb) cb(); }
+  }, delay);
+}
+
+/* Run a staged simulation for a nice realistic effect */
+function runSimulation(target) {
+  terminal.innerHTML = ''; // clear on each run
+  const stage = [
+    { wait: 200, text: `-- initializing console for ${target} --` },
+    { wait: 400, text: 'handshake -> OK' },
+    { wait: 600, text: `allocating mirror streams: ${HEX()}` },
+    { wait: 900, text: 'syncing nodes...' },
+    { wait: 1000, text: 'replicator: connected -> ' + BASE64() },
+    { wait: 1200, text: 'spawning observers...' },
+    // then flood with many quick log lines
+  ];
+
+  let time = 0;
+  stage.forEach(s => {
+    time += s.wait;
+    setTimeout(()=> typeOut(s.text, 8), time);
+  });
+
+  // flood simulated logs (harmless gibberish) for 4s
+  const floodStart = time + 1200;
+  for (let i=0;i<40;i++){
+    setTimeout(()=> {
+      appendLine(makeLogLine(target));
+    }, floodStart + i * 120);
+  }
+
+  // show pseudo-sensitive "dump" (gibberish)
+  setTimeout(()=> {
+    appendLine('--- memory-dump START ---');
+    for(let i=0;i<6;i++){
+      appendLine(`0x${HEX()}  ${BASE64()}  ${GIBBER()}`);
+    }
+    appendLine('--- memory-dump END ---');
+  }, floodStart + 40*120 + 300);
+
+  // final badge & viewer spike effect
+  setTimeout(()=> {
+    appendLine(`[${new Date().toISOString().slice(0,19)}] COMPLETE -> REPORT READY`);
+    // small viewer spike to make it feel "live"
+    viewers += Math.floor(Math.random()*120)+30;
+    viewersEl.textContent = "VIEWERS " + viewers;
+  }, floodStart + 40*120 + 900);
+}
+
+/* Bind UI */
+runBtn.onclick = ()=> {
+  const t = (input.value.trim() || 'StrawHatBank');
+  runSimulation(t);
+};
+input.addEventListener('keydown', e => { if (e.key === 'Enter') runBtn.click(); });
+
+/* initialize a passive feed so page doesn't look empty */
+(function seedFeed(){
+  const seedTarget = 'strawhat-core';
+  appendLine(`-- connection observed to ${seedTarget} --`);
+  for(let i=0;i<8;i++){
+    setTimeout(()=> appendLine(makeLogLine(seedTarget)), 500 + i*350);
+  }
+  setTimeout(()=> appendLine('-- passive feed active --'), 3600);
+})();
 </script>
 </body>
 </html>
+
