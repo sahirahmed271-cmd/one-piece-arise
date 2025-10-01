@@ -27,7 +27,7 @@
         body {
             margin: 0;
             font-family: Arial, sans-serif;
-            /* USING LOCAL FILE: op-background.jpg */
+            /* Using local file */
             background: url('op-background.jpg') no-repeat center center fixed;
             background-size: cover;
             color: var(--text-light);
@@ -35,12 +35,12 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            padding: 20px;
+            padding: 10px; /* Reduced padding for mobile */
         }
 
         /*
         ------------------------------------------
-        LAYOUT & CONTAINERS
+        RESPONSIVE LAYOUT (Flexbox & Media Query)
         ------------------------------------------
         */
         .container {
@@ -50,12 +50,36 @@
             background: var(--bg-dark);
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            padding: 30px;
+            padding: 20px;
         }
 
+        #game-container {
+            display: flex;
+            flex-direction: column; /* Stack vertically on mobile first */
+            gap: 20px;
+            align-items: center;
+        }
+
+        @media (min-width: 768px) {
+            #game-container {
+                flex-direction: row; /* Switch to horizontal on desktop */
+                justify-content: space-around;
+                align-items: flex-start;
+                padding: 20px 0;
+            }
+            #board {
+                width: 450px;
+                height: 450px;
+            }
+            #controls {
+                width: 280px;
+                order: 2; /* Ensure controls are on the right */
+            }
+        }
+        
         header h1 {
             font-family: var(--font-main);
-            font-size: 4em;
+            font-size: clamp(2.5em, 6vw, 4em); /* Responsive font size */
             color: var(--op-gold);
             text-shadow: 4px 4px var(--op-red), 6px 6px #000;
             margin-bottom: 20px;
@@ -70,24 +94,18 @@
         GAME BOARD & TOKENS
         ------------------------------------------
         */
-        #game-container {
-            display: grid;
-            grid-template-columns: 1fr 250px;
-            gap: 30px;
-            align-items: flex-start;
-        }
-
         #board {
             margin: 0 auto;
-            width: 400px;
-            height: 400px;
-            /* USING LOCAL FILE: op-ludoboard.png */
+            width: 350px; /* Default size for mobile */
+            height: 350px;
+            /* Using local file */
             background: url('op-ludoboard.png') no-repeat center center;
             background-size: contain;
             position: relative;
             border: 5px solid var(--op-gold);
             border-radius: 10px;
             box-shadow: 0 0 20px rgba(255, 204, 0, 0.5);
+            order: 1; /* Board comes first */
         }
 
         .token {
@@ -100,35 +118,17 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
             background-position: center;
             background-repeat: no-repeat;
-            background-size: 100%; /* Fit the icon perfectly */
+            background-size: 100%;
             background-color: rgba(255, 255, 255, 0.2);
+            /* Local character files */
         }
 
-        /* FIXED Character Images using LOCAL FILES */
-        .token.red { 
-            border-color: var(--op-red); 
-            background-image: url('luffy-icon.png');
-        }
-        .token.blue { 
-            border-color: var(--op-blue); 
-            background-image: url('zoro-icon.png');
-        }
-        .token.green { 
-            border-color: var(--op-green); 
-            background-image: url('nami-icon.png');
-        }
-        .token.yellow { 
-            border-color: var(--op-yellow); 
-            background-image: url('usopp-icon.png');
-        }
-        .token.purple { 
-            border-color: var(--op-purple); 
-            background-image: url('sanji-icon.png');
-        }
-        .token.orange { 
-            border-color: var(--op-orange); 
-            background-image: url('chopper-icon.png');
-        }
+        .token.red { border-color: var(--op-red); background-image: url('luffy-icon.png'); }
+        .token.blue { border-color: var(--op-blue); background-image: url('zoro-icon.png'); }
+        .token.green { border-color: var(--op-green); background-image: url('nami-icon.png'); }
+        .token.yellow { border-color: var(--op-yellow); background-image: url('usopp-icon.png'); }
+        .token.purple { border-color: var(--op-purple); background-image: url('sanji-icon.png'); }
+        .token.orange { border-color: var(--op-orange); background-image: url('chopper-icon.png'); }
 
 
         /*
@@ -137,10 +137,13 @@
         ------------------------------------------
         */
         #controls {
+            width: 100%; /* Default to full width on mobile */
+            max-width: 350px; /* Restrict max width */
             background: rgba(0, 0, 0, 0.5);
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+            order: 2; /* Controls come second on mobile */
         }
 
         #current-player {
@@ -149,10 +152,6 @@
             color: var(--op-gold);
             font-family: var(--font-main);
             letter-spacing: 1px;
-        }
-
-        #player-name {
-            text-shadow: 1px 1px #000;
         }
 
         button {
@@ -196,25 +195,72 @@
 
         /*
         ------------------------------------------
-        DICE & WINNER
+        3D DICE STYLING
         ------------------------------------------
         */
-        #dice {
-            width: 80px;
-            height: 80px;
-            margin: 20px auto;
-            font-size: 3em;
-            background: var(--text-light);
-            color: var(--op-red);
-            border-radius: 15px;
+        .dice-wrapper {
+            perspective: 600px;
+            margin: 30px auto;
+            width: 100px;
+            height: 100px;
             display: flex;
             justify-content: center;
             align-items: center;
-            border: 4px solid var(--op-gold);
-            box-shadow: 0 0 10px rgba(255, 204, 0, 0.7);
-            font-family: var(--font-main);
         }
 
+        #dice {
+            width: 100px;
+            height: 100px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 1.5s ease-out;
+            background-color: var(--text-light); /* Base color of the cube */
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(255, 204, 0, 0.7);
+        }
+
+        .dice-face {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.3);
+        }
+
+        /* Dot styling */
+        .dot {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background-color: var(--op-red);
+        }
+        .dot.c { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        .dot.tl { top: 15%; left: 15%; }
+        .dot.tr { top: 15%; right: 15%; }
+        .dot.bl { bottom: 15%; left: 15%; }
+        .dot.br { bottom: 15%; right: 15%; }
+        .dot.cl { top: 50%; left: 15%; transform: translateY(-50%); }
+        .dot.cr { top: 50%; right: 15%; transform: translateY(-50%); }
+
+        /* Face positioning and rotation */
+        .face-1 { transform: rotateY(0deg) translateZ(50px); }
+        .face-2 { transform: rotateY(90deg) translateZ(50px); }
+        .face-3 { transform: rotateY(180deg) translateZ(50px); }
+        .face-4 { transform: rotateY(-90deg) translateZ(50px); }
+        .face-5 { transform: rotateX(90deg) translateZ(50px); }
+        .face-6 { transform: rotateX(-90deg) translateZ(50px); }
+
+        /*
+        ------------------------------------------
+        WINNER & FIREWORKS
+        ------------------------------------------
+        */
         #winner {
             padding: 40px;
             background: linear-gradient(45deg, var(--op-red), var(--bg-dark));
@@ -228,12 +274,7 @@
             text-shadow: 3px 3px var(--op-red);
             font-family: var(--font-main);
         }
-
-        /*
-        ------------------------------------------
-        FIREWORKS (Existing Animation Maintained)
-        ------------------------------------------
-        */
+        
         @keyframes fireworks {
             0% { transform: scale(0); opacity: 1; }
             50% { transform: scale(1.5); opacity: 0.7; }
@@ -262,8 +303,44 @@
                 </div>
             <div id="controls">
                 <div id="current-player">Current Pirate: <span id="player-name"></span></div>
+                <div class="dice-wrapper">
+                    <div id="dice">
+                        <div class="dice-face face-1">
+                            <div class="dot c"></div>
+                        </div>
+                        <div class="dice-face face-2">
+                            <div class="dot tl"></div>
+                            <div class="dot br"></div>
+                        </div>
+                        <div class="dice-face face-3">
+                            <div class="dot tl"></div>
+                            <div class="dot c"></div>
+                            <div class="dot br"></div>
+                        </div>
+                        <div class="dice-face face-4">
+                            <div class="dot tl"></div>
+                            <div class="dot tr"></div>
+                            <div class="dot bl"></div>
+                            <div class="dot br"></div>
+                        </div>
+                        <div class="dice-face face-5">
+                            <div class="dot tl"></div>
+                            <div class="dot tr"></div>
+                            <div class="dot c"></div>
+                            <div class="dot bl"></div>
+                            <div class="dot br"></div>
+                        </div>
+                        <div class="dice-face face-6">
+                            <div class="dot tl"></div>
+                            <div class="dot tr"></div>
+                            <div class="dot cl"></div>
+                            <div class="dot cr"></div>
+                            <div class="dot bl"></div>
+                            <div class="dot br"></div>
+                        </div>
+                    </div>
+                </div>
                 <button id="rollDiceBtn">Roll the Dice</button>
-                <div id="dice">6</div>
             </div>
         </div>
 
@@ -279,7 +356,7 @@
         const playerSelection = document.getElementById('player-selection');
         const gameContainer = document.getElementById('game-container');
         const rollDiceBtn = document.getElementById('rollDiceBtn');
-        const dice = document.getElementById('dice');
+        const diceElement = document.getElementById('dice'); // Renamed to diceElement
         const playerNameDisplay = document.getElementById('player-name');
         const winnerDiv = document.getElementById('winner');
         const winnerText = document.getElementById('winnerText');
@@ -292,31 +369,38 @@
         let tokens = [];
         const colors = ["red", "blue", "green", "yellow", "purple", "orange"];
         const colorHex = { 
-            "red": "#d90429",
-            "blue": "#0077b6",
-            "green": "#40916c",
-            "yellow": "#fca311",
-            "purple": "#7209b7",
-            "orange": "#ff7f00"
+            "red": "#d90429", "blue": "#0077b6", "green": "#40916c",
+            "yellow": "#fca311", "purple": "#7209b7", "orange": "#ff7f00"
+        };
+        
+        // Lookup table for dice rotation (to show a specific number)
+        // Values are transform(rotateX, rotateY)
+        const diceRotations = {
+            1: 'rotateX(0deg) rotateY(0deg)',
+            2: 'rotateY(-90deg)',
+            3: 'rotateY(180deg)',
+            4: 'rotateY(90deg)',
+            5: 'rotateX(-90deg)',
+            6: 'rotateX(90deg)',
         };
 
-
-        // Ludo board path coordinates (simplified for a circle on a 400x400 board)
+        // Ludo board path coordinates (responsive to board size)
         const path = [];
-        const boardSize = 400;
-        const radius = 160;
+        const boardSize = 450; // Use max size for calculation
+        const radius = 180; // Adjusted radius
         const center = boardSize / 2;
-        const tokenSize = 38; // Matches CSS token size
+        const tokenSize = 38; 
 
         for(let i = 0; i < 52; i++){
-            let angle = (i / 52) * 2 * Math.PI - Math.PI / 2; // Start from the top
+            let angle = (i / 52) * 2 * Math.PI - Math.PI / 2;
             let x = center + radius * Math.cos(angle) - (tokenSize / 2);
             let y = center + radius * Math.sin(angle) - (tokenSize / 2);
-            path.push({ x: x, y: y });
+            // Use percentage for responsive positioning
+            path.push({ x: (x / boardSize) * 100, y: (y / boardSize) * 100 });
         }
 
         // Home position (center of the board)
-        path[51] = { x: center - (tokenSize / 2), y: center - (tokenSize / 2) };
+        path[51] = { x: (center - (tokenSize / 2)) / boardSize * 100, y: (center - (tokenSize / 2)) / boardSize * 100 };
 
 
         startBtn.addEventListener('click', () => {
@@ -338,7 +422,7 @@
                     name: opNames[i % opNames.length],
                     color: colors[i],
                     position: 0,
-                    isAI: i >= 2
+                    isAI: i >= 2 
                 });
                 let token = document.createElement('div');
                 token.classList.add('token', colors[i]);
@@ -348,7 +432,7 @@
             }
             currentPlayerIndex = 0;
             updateCurrentPlayerDisplay();
-            if(players[currentPlayerIndex].isAI) setTimeout(rollDice, 1000);
+            // Start the game by rolling the dice (no automatic AI roll here)
         }
 
         rollDiceBtn.addEventListener('click', rollDice);
@@ -357,36 +441,54 @@
             rollDiceBtn.disabled = true;
             let roll = Math.floor(Math.random() * 6) + 1;
             
+            // AI player names (used for display only)
+            const player = players[currentPlayerIndex];
+
+            // 1. Roll Dice Animation
             animateDice(roll).then(() => {
+                // 2. Move Player Logic
                 movePlayer(roll);
                 
+                // 3. Check for Win
                 if(checkWinner()) {
-                    return showWinner(players[currentPlayerIndex].name);
+                    return showWinner(player.name);
                 }
                 
+                // 4. Determine Next Player
                 if (roll !== 6) {
                     currentPlayerIndex = (currentPlayerIndex + 1) % numPlayers;
                 }
                 
+                // 5. Update UI and Enable Button
                 updateCurrentPlayerDisplay();
                 rollDiceBtn.disabled = false;
                 
-                if(players[currentPlayerIndex].isAI) setTimeout(rollDice, 1000);
+                // New logic: AI is now manual, but we can change the prompt text
+                if (players[currentPlayerIndex].isAI) {
+                    rollDiceBtn.innerText = `Roll for ${players[currentPlayerIndex].name} (AI)`;
+                } else {
+                    rollDiceBtn.innerText = 'Roll the Dice';
+                }
+
             });
         }
 
         function animateDice(roll) {
             return new Promise(res => {
-                let frames = 15, count = 0;
-                let diceInterval = setInterval(() => {
-                    dice.innerText = Math.floor(Math.random() * 6) + 1;
-                    count++;
-                    if(count >= frames){ 
-                        clearInterval(diceInterval); 
-                        dice.innerText = roll; 
-                        res(); 
-                    }
-                }, 70);
+                // Use random spin values to make it look like a roll
+                const xRand = Math.floor(Math.random() * 5) + 3; // 3 to 7 full rotations
+                const yRand = Math.floor(Math.random() * 5) + 3;
+
+                // Apply a dramatic random spin first
+                diceElement.style.transition = 'transform 1.5s ease-out';
+                diceElement.style.transform = `rotateX(${xRand * 360}deg) rotateY(${yRand * 360}deg)`;
+
+                // After a short delay, snap to the final correct face
+                setTimeout(() => {
+                    diceElement.style.transition = 'transform 0.5s ease-in-out';
+                    diceElement.style.transform = diceRotations[roll];
+                    res();
+                }, 1500); // Wait for the main spin to finish
             });
         }
 
@@ -405,8 +507,9 @@
         }
 
         function setTokenPosition(index, pos) {
-            tokens[index].style.left = path[pos].x + 'px';
-            tokens[index].style.top = path[pos].y + 'px';
+            // Use percentage values from the path array for responsive tokens
+            tokens[index].style.left = path[pos].x + '%';
+            tokens[index].style.top = path[pos].y + '%';
         }
 
         function captureOpponent(pos, current) {
@@ -435,21 +538,21 @@
         }
 
         function createFireworks() {
+            // Use a specific element for fireworks to contain them
+            const targetElement = winnerDiv.classList.contains('hidden') ? board : winnerDiv;
+            
             for(let i = 0; i < 30; i++){
                 let f = document.createElement('div');
                 f.classList.add('firework');
-                f.style.left = (Math.random() * gameContainer.offsetWidth) + 'px';
-                f.style.top = (Math.random() * gameContainer.offsetHeight) + 'px';
-                winnerDiv.appendChild(f);
+                f.style.left = (Math.random() * targetElement.clientWidth) + 'px';
+                f.style.top = (Math.random() * targetElement.clientHeight) + 'px';
+                targetElement.appendChild(f);
                 setTimeout(() => f.remove(), 1000);
             }
         }
     </script>
 </body>
 </html>
-
-
-
 
 
 
