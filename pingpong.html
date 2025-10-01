@@ -12,18 +12,21 @@ body {
     font-family: Arial, sans-serif;
     color: gold;
     text-align: center;
+    overflow: hidden;
 }
-h1 { margin-top: 20px; text-shadow: 2px 2px black; }
+h1 { margin-top: 10px; text-shadow: 2px 2px black; font-size: 6vw; }
 canvas {
-    background-color: rgba(0,0,0,0.5);
     display: block;
-    margin: 20px auto;
+    margin: 10px auto;
     border: 2px solid gold;
     border-radius: 12px;
     touch-action: none;
+    background-color: rgba(0,0,0,0.5);
+    width: 95vw;   /* responsive */
+    height: 60vh;  /* responsive */
 }
 .score {
-    font-size: 24px;
+    font-size: 5vw;
     margin: 10px;
     text-shadow: 2px 2px black;
 }
@@ -31,7 +34,7 @@ canvas {
     display: inline-block;
     margin: 12px;
     padding: 10px 18px;
-    font-size: 18px;
+    font-size: 4vw;
     color: black;
     background: linear-gradient(90deg,#f59e0b,#fcd34d);
     border-radius: 10px;
@@ -51,14 +54,26 @@ canvas {
 </div>
 
 <div class="score" id="score">Player: 0 | CPU: 0</div>
-<canvas id="gameCanvas" width="800" height="500"></canvas>
+<canvas id="gameCanvas"></canvas>
 <a href="index.html" class="back-btn">Back to Games Hub</a>
 
 <script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-const paddleWidth = 20, paddleHeight = 100, ballRadius = 12;
+// Resize canvas dynamically
+function resizeCanvas() {
+    canvas.width = window.innerWidth * 0.95;
+    canvas.height = window.innerHeight * 0.6;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+// Game variables scale with canvas size
+let paddleHeight = canvas.height * 0.2;
+let paddleWidth = canvas.width * 0.025;
+let ballRadius = canvas.width * 0.02;
+
 let player1Y = canvas.height/2 - paddleHeight/2;
 let player2Y = canvas.height/2 - paddleHeight/2;
 let ballX = canvas.width/2, ballY = canvas.height/2;
@@ -67,36 +82,26 @@ let score1 = 0, score2 = 0;
 let mode = 'solo';
 let upPressed=false, downPressed=false, wPressed=false, sPressed=false;
 
-// Sparks array
 let sparks = [];
-
-// Function to create spark on paddle hit
 function createSpark(x, y) {
     for(let i=0;i<10;i++){
         sparks.push({
-            x: x,
-            y: y,
+            x: x, y: y,
             vx: (Math.random()-0.5)*6,
             vy: (Math.random()-0.5)*6,
             alpha: 1,
-            size: Math.random()*4 + 2,
-            color: `hsl(${Math.random()*60+20}, 100%, 50%)` // Devil Fruit orange-yellow style
+            size: Math.random()*3 + 2,
+            color: `hsl(${Math.random()*60+20}, 100%, 50%)`
         });
     }
 }
-
-// Update sparks
 function updateSparks() {
     for(let i=sparks.length-1;i>=0;i--){
         const s = sparks[i];
-        s.x += s.vx;
-        s.y += s.vy;
-        s.alpha -= 0.03;
+        s.x += s.vx; s.y += s.vy; s.alpha -= 0.03;
         if(s.alpha<=0) sparks.splice(i,1);
     }
 }
-
-// Draw sparks
 function drawSparks() {
     for(const s of sparks){
         ctx.globalAlpha = s.alpha;
@@ -108,17 +113,16 @@ function drawSparks() {
     ctx.globalAlpha = 1;
 }
 
-// Draw elements
 function draw() {
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
-    ctx.fillStyle = "#FF0000"; // Luffy
+    ctx.fillStyle = "#FF0000";
     ctx.fillRect(20, player1Y, paddleWidth, paddleHeight);
 
-    ctx.fillStyle = "#00FF00"; // Zoro
+    ctx.fillStyle = "#00FF00";
     ctx.fillRect(canvas.width - 40, player2Y, paddleWidth, paddleHeight);
 
-    ctx.fillStyle = "#FFD700"; // fruit ball
+    ctx.fillStyle = "#FFD700";
     ctx.beginPath();
     ctx.arc(ballX, ballY, ballRadius, 0, Math.PI*2);
     ctx.fill();
@@ -130,62 +134,44 @@ function draw() {
     else document.getElementById('score').textContent = `Player1: ${score1} | Player2: ${score2}`;
 }
 
-// Reset ball
 function resetBall(){
-    ballX = canvas.width/2;
-    ballY = canvas.height/2;
+    ballX = canvas.width/2; ballY = canvas.height/2;
     ballSpeedX = (Math.random()>0.5?6:-6);
     ballSpeedY = (Math.random()*4 + 3)*(Math.random()>0.5?1:-1);
 }
 
-// Update ball movement with mode-based speed
 function update() {
-    let speedX = ballSpeedX;
-    let speedY = ballSpeedY;
-
+    let speedX, speedY;
     if(mode === 'solo'){
-        speedX = (ballSpeedX > 0 ? 4*1.05 : -4*1.05); // CPU slightly faster 5%
+        speedX = (ballSpeedX > 0 ? 4*1.05 : -4*1.05);
         speedY = ballSpeedY * 0.8*1.05;
-    } else if(mode === 'two'){
-        // two-player same as CPU solo mode speed
+    } else {
         speedX = (ballSpeedX > 0 ? 4*1.05 : -4*1.05);
         speedY = ballSpeedY * 0.8*1.05;
     }
+    ballX += speedX; ballY += speedY;
 
-    ballX += speedX;
-    ballY += speedY;
-
-    // Wall collisions
     if(ballY + ballRadius > canvas.height || ballY - ballRadius < 0) ballSpeedY = -ballSpeedY;
 
-    // Paddle collisions
     if(ballX - ballRadius < 40 && ballY > player1Y && ballY < player1Y + paddleHeight){
-        ballSpeedX = -ballSpeedX;
-        ballSpeedX *= 1.05;
-        ballSpeedY *= 1.05;
-        createSpark(ballX, ballY); // spark effect
+        ballSpeedX = -ballSpeedX; ballSpeedX *= 1.05; ballSpeedY *= 1.05;
+        createSpark(ballX, ballY);
     }
     if(ballX + ballRadius > canvas.width - 40 && ballY > player2Y && ballY < player2Y + paddleHeight){
-        ballSpeedX = -ballSpeedX;
-        ballSpeedX *= 1.05;
-        ballSpeedY *= 1.05;
-        createSpark(ballX, ballY); // spark effect
+        ballSpeedX = -ballSpeedX; ballSpeedX *= 1.05; ballSpeedY *= 1.05;
+        createSpark(ballX, ballY);
     }
 
-    // Score
     if(ballX < 0){ score2++; resetBall(); }
     if(ballX > canvas.width){ score1++; resetBall(); }
 
-    // CPU AI
     if(mode==='solo'){
         const cpuCenter = player2Y + paddleHeight/2;
-        if(cpuCenter < ballY) player2Y += 5;
-        else player2Y -=5;
+        if(cpuCenter < ballY) player2Y += 5; else player2Y -=5;
         if(player2Y < 0) player2Y = 0;
         if(player2Y + paddleHeight > canvas.height) player2Y = canvas.height - paddleHeight;
     }
 
-    // Player controls
     if(upPressed) player1Y -= 7;
     if(downPressed) player1Y += 7;
     if(player1Y < 0) player1Y=0;
@@ -199,7 +185,6 @@ function update() {
     }
 }
 
-// Keyboard controls
 document.addEventListener('keydown', e => {
     if(mode==='two'){
         if(e.key==='ArrowUp') upPressed=true;
@@ -223,8 +208,7 @@ document.addEventListener('keyup', e => {
     }
 });
 
-// Mobile touch controls
-let touchY1 = null, touchY2 = null;
+let touchY1=null, touchY2=null;
 canvas.addEventListener('touchstart', e => {
     const rect = canvas.getBoundingClientRect();
     e.preventDefault();
@@ -241,36 +225,27 @@ canvas.addEventListener('touchmove', e => {
             player1Y = touch.clientY - touchY1;
             if(player1Y <0) player1Y=0;
             if(player1Y + paddleHeight > canvas.height) player1Y = canvas.height - paddleHeight;
-        } else {
-            if(mode==='two'){
-                player2Y = touch.clientY - touchY2;
-                if(player2Y <0) player2Y=0;
-                if(player2Y + paddleHeight > canvas.height) player2Y = canvas.height - paddleHeight;
-            }
+        } else if(mode==='two'){
+            player2Y = touch.clientY - touchY2;
+            if(player2Y <0) player2Y=0;
+            if(player2Y + paddleHeight > canvas.height) player2Y = canvas.height - paddleHeight;
         }
     }
-}, {passive:false});
+},{passive:false});
 
-// Game loop
-function loop(){
-    update();
-    draw();
-    requestAnimationFrame(loop);
-}
-
-// Start game
+function loop(){ update(); draw(); requestAnimationFrame(loop); }
 function startGame(selectedMode){
     mode = selectedMode;
-    score1 = 0;
-    score2 = 0;
+    score1=0; score2=0;
     player1Y = canvas.height/2 - paddleHeight/2;
     player2Y = canvas.height/2 - paddleHeight/2;
-    upPressed=false; downPressed=false; wPressed=false; sPressed=false;
-    sparks = [];
+    upPressed=downPressed=wPressed=sPressed=false;
+    sparks=[];
     loop();
 }
 </script>
 </body>
 </html>
+
 
 
