@@ -67,6 +67,47 @@ let score1 = 0, score2 = 0;
 let mode = 'solo';
 let upPressed=false, downPressed=false, wPressed=false, sPressed=false;
 
+// Sparks array
+let sparks = [];
+
+// Function to create spark on paddle hit
+function createSpark(x, y) {
+    for(let i=0;i<10;i++){
+        sparks.push({
+            x: x,
+            y: y,
+            vx: (Math.random()-0.5)*6,
+            vy: (Math.random()-0.5)*6,
+            alpha: 1,
+            size: Math.random()*4 + 2,
+            color: `hsl(${Math.random()*60+20}, 100%, 50%)` // Devil Fruit orange-yellow style
+        });
+    }
+}
+
+// Update sparks
+function updateSparks() {
+    for(let i=sparks.length-1;i>=0;i--){
+        const s = sparks[i];
+        s.x += s.vx;
+        s.y += s.vy;
+        s.alpha -= 0.03;
+        if(s.alpha<=0) sparks.splice(i,1);
+    }
+}
+
+// Draw sparks
+function drawSparks() {
+    for(const s of sparks){
+        ctx.globalAlpha = s.alpha;
+        ctx.fillStyle = s.color;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.size, 0, Math.PI*2);
+        ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+}
+
 // Draw elements
 function draw() {
     ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -77,35 +118,64 @@ function draw() {
     ctx.fillStyle = "#00FF00"; // Zoro
     ctx.fillRect(canvas.width - 40, player2Y, paddleWidth, paddleHeight);
 
-    ctx.fillStyle = "#FFD700";
+    ctx.fillStyle = "#FFD700"; // fruit ball
     ctx.beginPath();
     ctx.arc(ballX, ballY, ballRadius, 0, Math.PI*2);
     ctx.fill();
+
+    updateSparks();
+    drawSparks();
 
     if(mode==='solo') document.getElementById('score').textContent = `Player: ${score1} | CPU: ${score2}`;
     else document.getElementById('score').textContent = `Player1: ${score1} | Player2: ${score2}`;
 }
 
-// Ball movement
-function update() {
-    ballX += ballSpeedX;
-    ballY += ballSpeedY;
+// Reset ball
+function resetBall(){
+    ballX = canvas.width/2;
+    ballY = canvas.height/2;
+    ballSpeedX = (Math.random()>0.5?6:-6);
+    ballSpeedY = (Math.random()*4 + 3)*(Math.random()>0.5?1:-1);
+}
 
+// Update ball movement with mode-based speed
+function update() {
+    let speedX = ballSpeedX;
+    let speedY = ballSpeedY;
+
+    if(mode === 'solo'){
+        speedX = (ballSpeedX > 0 ? 4 : -4);
+        speedY = ballSpeedY * 0.8;
+    } else if(mode === 'two'){
+        speedX = (ballSpeedX > 0 ? 8 : -8);
+        speedY = ballSpeedY * 1.2;
+    }
+
+    ballX += speedX;
+    ballY += speedY;
+
+    // Wall collisions
     if(ballY + ballRadius > canvas.height || ballY - ballRadius < 0) ballSpeedY = -ballSpeedY;
 
+    // Paddle collisions
     if(ballX - ballRadius < 40 && ballY > player1Y && ballY < player1Y + paddleHeight){
         ballSpeedX = -ballSpeedX;
-        ballSpeedX *= 1.05; ballSpeedY *= 1.05;
+        ballSpeedX *= 1.05;
+        ballSpeedY *= 1.05;
+        createSpark(ballX, ballY); // spark effect
     }
-
     if(ballX + ballRadius > canvas.width - 40 && ballY > player2Y && ballY < player2Y + paddleHeight){
         ballSpeedX = -ballSpeedX;
-        ballSpeedX *= 1.05; ballSpeedY *= 1.05;
+        ballSpeedX *= 1.05;
+        ballSpeedY *= 1.05;
+        createSpark(ballX, ballY); // spark effect
     }
 
+    // Score
     if(ballX < 0){ score2++; resetBall(); }
     if(ballX > canvas.width){ score1++; resetBall(); }
 
+    // CPU AI
     if(mode==='solo'){
         const cpuCenter = player2Y + paddleHeight/2;
         if(cpuCenter < ballY) player2Y += 5;
@@ -114,6 +184,7 @@ function update() {
         if(player2Y + paddleHeight > canvas.height) player2Y = canvas.height - paddleHeight;
     }
 
+    // Player controls
     if(upPressed) player1Y -= 7;
     if(downPressed) player1Y += 7;
     if(player1Y < 0) player1Y=0;
@@ -125,14 +196,6 @@ function update() {
         if(player2Y < 0) player2Y=0;
         if(player2Y + paddleHeight > canvas.height) player2Y = canvas.height - paddleHeight;
     }
-}
-
-// Reset ball
-function resetBall(){
-    ballX = canvas.width/2;
-    ballY = canvas.height/2;
-    ballSpeedX = (Math.random()>0.5?6:-6);
-    ballSpeedY = (Math.random()*4 + 3)*(Math.random()>0.5?1:-1);
 }
 
 // Keyboard controls
@@ -202,8 +265,10 @@ function startGame(selectedMode){
     player1Y = canvas.height/2 - paddleHeight/2;
     player2Y = canvas.height/2 - paddleHeight/2;
     upPressed=false; downPressed=false; wPressed=false; sPressed=false;
+    sparks = [];
     loop();
 }
 </script>
 </body>
 </html>
+
