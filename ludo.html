@@ -3,316 +3,192 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>One Piece Ludo – Pro Ultimate</title>
+<title>One Piece Ludo Official</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Pirata+One&display=swap');
 body {
-  margin:0;
-  font-family:Arial;
-  text-align:center;
-  background:url('one-piece-bg.jpg') center/cover no-repeat;
-  color:gold;
-  overflow-x:hidden;
+    margin:0; font-family:'Pirata One', cursive;
+    background:url('https://i.ibb.co/7Nv5D6X/onepiece-bg.jpg') no-repeat center center fixed;
+    background-size:cover; color:#fff;
+    display:flex; justify-content:center; align-items:center; min-height:100vh;
 }
-#playerSelect {
-  margin-top:20px;
+.container{text-align:center;width:100%;}
+.hidden{display:none;}
+#board{margin:20px auto; width:420px; height:420px; background:url('https://i.ibb.co/x2Xx6Zm/ludo-board.png') no-repeat center center; background-size:contain; position:relative;}
+.token{width:25px;height:25px;border-radius:50%;position:absolute;transition:all 0.3s ease;}
+.token.red{background:red;} .token.blue{background:blue;} .token.green{background:green;} .token.yellow{background:yellow;} .token.purple{background:purple;} .token.orange{background:orange;}
+#dice{width:50px;height:50px;margin:10px auto;font-size:30px;background:#fff;color:#000;border-radius:10px;display:flex;justify-content:center;align-items:center;}
+button{padding:10px 20px;font-size:16px;margin:5px;cursor:pointer;border:none;border-radius:5px;background:#ffcc00;transition:0.3s;}
+button:hover{background:#ffaa00;}
+#winner h2{font-size:2em;color:gold;text-shadow:2px 2px #000;}
+#controls{margin-top:10px;}
+/* Fireworks animation */
+@keyframes fireworks {
+  0% {transform: scale(0); opacity:1;}
+  50% {transform: scale(1.5); opacity:0.7;}
+  100% {transform: scale(0); opacity:0;}
 }
-#gameCanvas {
-  display:block;
-  margin:20px auto;
-  border:5px solid gold;
-  max-width:95vw;
-  height:auto;
-}
-button {
-  margin:10px;
-  padding:10px 20px;
-  font-size:20px;
-  border:2px solid gold;
-  border-radius:8px;
-  background:rgba(0,0,0,0.6);
-  color:gold;
-  cursor:pointer;
-  transition:0.3s;
-}
-button:hover { background: gold; color: black; }
-#diceResult {
-  font-size:24px;
-  font-weight:bold;
-  margin-top:10px;
-}
-.confetti-piece{
-  position:absolute;
-  width:8px; height:8px;
-  background:gold;
-  animation:confetti 1.5s linear forwards;
-}
-@keyframes confetti {
-  0%{opacity:1;transform:translateY(0) rotate(0deg);}
-  100%{opacity:0;transform:translateY(500px) rotate(720deg);}
+.firework{
+  position:absolute; width:15px; height:15px; background:gold; border-radius:50%;
+  animation:fireworks 1s ease-out forwards;
 }
 </style>
 </head>
 <body>
-<h1>🎲 One Piece Ludo – Pro Ultimate</h1>
+<div class="container">
+<header><h1>One Piece Ludo</h1></header>
 
-<div id="playerSelect">
-  <label>Select number of human players: </label>
-  <select id="numPlayers">
-    <option value="1">1</option>
-    <option value="2" selected>2</option>
-    <option value="3">3</option>
-    <option value="4">4</option>
-  </select>
-  <button onclick="startGame()">Start Game</button>
+<div id="player-selection">
+<h2>Select Number of Players (2-6)</h2>
+<input type="number" id="numPlayers" min="2" max="6" value="2">
+<button id="startBtn">Start Game</button>
 </div>
 
-<canvas id="gameCanvas" width="600" height="600"></canvas>
-<div>
-  <button onclick="rollDice()" id="rollBtn">Roll Dice</button>
-  <div id="diceResult">Dice: -</div>
+<div id="game-container" class="hidden">
+<div id="board"></div>
+<div id="controls">
+<div id="current-player">Current Player: <span id="player-name"></span></div>
+<button id="rollDiceBtn">Roll Dice</button>
+<div id="dice"></div>
+</div>
 </div>
 
-<audio id="rollSound" src="https://www.fesliyanstudios.com/play-mp3/387" preload="auto"></audio>
-<audio id="moveSound" src="https://www.fesliyanstudios.com/play-mp3/6539" preload="auto"></audio>
-<audio id="captureSound" src="https://www.fesliyanstudios.com/play-mp3/6376" preload="auto"></audio>
-<audio id="finishSound" src="https://www.fesliyanstudios.com/play-mp3/6905" preload="auto"></audio>
+<div id="winner" class="hidden">
+<h2 id="winnerText"></h2>
+<button id="restartBtn">Restart Game</button>
+</div>
+</div>
 
 <script>
-// ========== Canvas & Audio ==========
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const size = 600;
-const cell = size/15;
-const safeZones=[[1,6],[2,8],[6,1],[8,2],[13,6],[12,8],[6,13],[8,12]];
+const startBtn=document.getElementById('startBtn');
+const numPlayersInput=document.getElementById('numPlayers');
+const playerSelection=document.getElementById('player-selection');
+const gameContainer=document.getElementById('game-container');
+const rollDiceBtn=document.getElementById('rollDiceBtn');
+const dice=document.getElementById('dice');
+const playerNameDisplay=document.getElementById('player-name');
+const winnerDiv=document.getElementById('winner');
+const winnerText=document.getElementById('winnerText');
+const restartBtn=document.getElementById('restartBtn');
+const board=document.getElementById('board');
 
-let numHumanPlayers = 2;
-let humanPlayers = [];
-let allPlayers = ["red","blue","green","yellow"];
-let pawns = {};
-let paths = {};
-let dice=0, rolling=false, current=0, timerInterval;
+let numPlayers=2;
+let players=[];
+let currentPlayerIndex=0;
+let tokens=[];
+const colors=["red","blue","green","yellow","purple","orange"];
 
-// Audio
-const rollSound = document.getElementById("rollSound");
-const moveSound = document.getElementById("moveSound");
-const captureSound = document.getElementById("captureSound");
-const finishSound = document.getElementById("finishSound");
-
-// ========== Pawn Class ==========
-class Pawn {
-  constructor(color, homeX, homeY, path, imgSrc){
-    this.color=color;
-    this.homeX=homeX;
-    this.homeY=homeY;
-    this.path=path;
-    this.pos=-1;
-    this.finished=false;
-    this.img=new Image();
-    this.img.src=imgSrc;
-    this.x=homeX;
-    this.y=homeY;
-  }
-  draw(){
-    let x = this.pos===-1 ? this.homeX : this.path[this.pos][0]*cell+cell/2;
-    let y = this.pos===-1 ? this.homeY : this.path[this.pos][1]*cell+cell/2;
-    ctx.drawImage(this.img,x-cell/3,y-cell/3,cell*2/3,cell*2/3);
-    if(this.finished){
-      ctx.beginPath();
-      ctx.arc(x,y,cell/3+3,0,Math.PI*2);
-      ctx.strokeStyle="gold";
-      ctx.lineWidth=3;
-      ctx.stroke();
-      ctx.lineWidth=1;
-    }
-  }
+// Ludo board path coordinates (simplified)
+const path = [];
+for(let i=0;i<52;i++){
+    let angle=(i/52)*2*Math.PI;
+    let radius=150;
+    path.push({x:200+radius*Math.cos(angle)-12, y:200+radius*Math.sin(angle)-12});
 }
 
-// ========== Paths ==========
-function makePaths(){
-  let path=[];
-  for(let i=0;i<6;i++) path.push([i,6]);
-  for(let i=0;i<6;i++) path.push([6,i]);
-  for(let i=6;i<15;i++) path.push([i,0]);
-  for(let i=1;i<6;i++) path.push([14,i]);
-  for(let i=14;i>=9;i--) path.push([i,6]);
-  for(let i=7;i<15;i++) path.push([8,i]);
-  for(let i=13;i>=0;i--) path.push([i,14]);
-  for(let i=13;i>=9;i--) path.push([0,i]);
-  for(let i=1;i<6;i++) path.push([i,8]);
-  for(let i=7;i<15;i++) path.push([6,i]);
-  return path;
-}
-
-paths.red = makePaths();
-paths.blue=[...paths.red.slice(13),...paths.red.slice(0,13)];
-paths.green=[...paths.red.slice(26),...paths.red.slice(0,26)];
-paths.yellow=[...paths.red.slice(39),...paths.red.slice(0,39)];
-
-// ========== Initialize Pawns ==========
-function initPawns(){
-  pawns.red=[
-    new Pawn("red",cell*2,cell*2,paths.red,"https://i.ibb.co/FYbNcxP/luffy.png"),
-    new Pawn("red",cell*4,cell*2,paths.red,"https://i.ibb.co/FYbNcxP/luffy.png"),
-    new Pawn("red",cell*2,cell*4,paths.red,"https://i.ibb.co/FYbNcxP/luffy.png"),
-    new Pawn("red",cell*4,cell*4,paths.red,"https://i.ibb.co/FYbNcxP/luffy.png")
-  ];
-  pawns.blue=[
-    new Pawn("blue",cell*11,cell*2,paths.blue,"https://i.ibb.co/gzPvJbK/zoro.png"),
-    new Pawn("blue",cell*13,cell*2,paths.blue,"https://i.ibb.co/gzPvJbK/zoro.png"),
-    new Pawn("blue",cell*11,cell*4,paths.blue,"https://i.ibb.co/gzPvJbK/zoro.png"),
-    new Pawn("blue",cell*13,cell*4,paths.blue,"https://i.ibb.co/gzPvJbK/zoro.png")
-  ];
-  pawns.green=[
-    new Pawn("green",cell*2,cell*11,paths.green,"https://i.ibb.co/6s5xDPS/nami.png"),
-    new Pawn("green",cell*4,cell*11,paths.green,"https://i.ibb.co/6s5xDPS/nami.png"),
-    new Pawn("green",cell*2,cell*13,paths.green,"https://i.ibb.co/6s5xDPS/nami.png"),
-    new Pawn("green",cell*4,cell*13,paths.green,"https://i.ibb.co/6s5xDPS/nami.png")
-  ];
-  pawns.yellow=[
-    new Pawn("yellow",cell*11,cell*11,paths.yellow,"https://i.ibb.co/FK4sGXd/sanji.png"),
-    new Pawn("yellow",cell*13,cell*11,paths.yellow,"https://i.ibb.co/FK4sGXd/sanji.png"),
-    new Pawn("yellow",cell*11,cell*13,paths.yellow,"https://i.ibb.co/FK4sGXd/sanji.png"),
-    new Pawn("yellow",cell*13,cell*13,paths.yellow,"https://i.ibb.co/FK4sGXd/sanji.png")
-  ];
-}
-
-// ========== Start Game ==========
-function startGame(){
-  numHumanPlayers=parseInt(document.getElementById("numPlayers").value);
-  humanPlayers = allPlayers.slice(0,numHumanPlayers);
-  initPawns();
-  document.getElementById("playerSelect").style.display="none";
-  current=0;
-  dice=0;
-  drawBoard();
-}
-
-// ========== Dice ==========
-function rollDice(){
-  if(rolling) return;
-  rolling=true; rollSound.play();
-  let count=0;
-  let interval=setInterval(()=>{
-    dice=Math.floor(Math.random()*6)+1;
-    document.getElementById("diceResult").innerText="Rolling... "+dice;
-    count++;
-    if(count>10){
-      clearInterval(interval);
-      document.getElementById("diceResult").innerText="Dice: "+dice+" ("+allPlayers[current].toUpperCase()+")";
-      rolling=false;
-      startTimer();
-    }
-  },100);
-}
-
-// ========== Timer ==========
-function startTimer(){
-  clearInterval(timerInterval);
-  let t=45;
-  timerInterval=setInterval(()=>{
-    document.getElementById("diceResult").innerText="Dice: "+dice+" | "+allPlayers[current].toUpperCase()+" turn | "+t+"s left";
-    t--;
-    if(t<0){ clearInterval(timerInterval); nextTurn(); }
-  },1000);
-}
-
-// ========== Movement & AI ==========
-canvas.addEventListener("click",(e)=>{
-  if(rolling || dice===0) return;
-  clearInterval(timerInterval);
-  let rect=canvas.getBoundingClientRect();
-  let mx=e.clientX-rect.left;
-  let my=e.clientY-rect.top;
-  let player=allPlayers[current];
-  if(!humanPlayers.includes(player)) return;
-  pawns[player].forEach(pawn=>{
-    let [cx,cy]=pawn.pos>=0 ? pawn.path[pawn.pos] : [pawn.homeX/cell,pawn.homeY/cell];
-    let px=cx*cell+cell/2, py=cy*cell+cell/2;
-    if(Math.sqrt((mx-px)**2+(my-py)**2)<cell/2) movePawn(pawn,player);
-  });
+startBtn.addEventListener('click',()=>{
+    numPlayers=parseInt(numPlayersInput.value);
+    if(numPlayers<2||numPlayers>6)return alert("Choose between 2 and 6 players");
+    playerSelection.classList.add('hidden');
+    gameContainer.classList.remove('hidden');
+    setupPlayers();
 });
 
-function movePawn(pawn,player){
-  if(pawn.finished) return;
-  let steps=dice;
-  let moveStep = ()=>{
-    if(steps<=0){ 
-      dice=0; 
-      if(!pawn.finished && !humanPlayers.includes(allPlayers[current])) setTimeout(()=>aiMove(allPlayers[current]),500);
-      else if(steps<=0) nextTurn(); 
-      return;
+restartBtn.addEventListener('click',()=>location.reload());
+
+function setupPlayers(){
+    players=[]; tokens=[]; board.innerHTML='';
+    for(let i=0;i<numPlayers;i++){
+        players.push({name:`Player ${i+1}`, color:colors[i], position:0, isAI:i>=2});
+        let token=document.createElement('div');
+        token.classList.add('token',colors[i]);
+        board.appendChild(token);
+        tokens.push(token);
+        setTokenPosition(i,0);
     }
-    if(pawn.pos===-1 && dice===6){ pawn.pos=0; moveSound.play(); }
-    else if(pawn.pos>=0){ let np=pawn.pos+1; if(np<pawn.path.length){ pawn.pos=np; moveSound.play(); captureCheck(pawn,player); if(pawn.pos===pawn.path.length-1){ pawn.finished=true; finishSound.play(); showConfetti(); } } }
-    steps--;
-    setTimeout(moveStep,200); // medium-fast
-  };
-  moveStep();
+    updateCurrentPlayerDisplay();
+    if(players[currentPlayerIndex].isAI)setTimeout(rollDice,800);
 }
 
-function captureCheck(pawn,player){
-  let [cx,cy]=pawn.path[pawn.pos];
-  for(let c in pawns) if(c!==player) pawns[c].forEach(p=>{
-    if(p.pos>=0 && !p.finished){ let [ox,oy]=p.path[p.pos]; if(cx===ox && cy===oy && !isSafe(cx,cy)){ p.pos=-1; captureSound.play(); flashPawn(p); }}
-  });
-}
-function flashPawn(p){
-  let flashes=0;
-  let f=setInterval(()=>{
-    flashes++;
-    if(flashes%2===0) ctx.globalAlpha=0.3; else ctx.globalAlpha=1;
-    if(flashes>4){ clearInterval(f); ctx.globalAlpha=1; }
-  },150);
-}
+rollDiceBtn.addEventListener('click',rollDice);
 
-function isSafe(x,y){ return safeZones.some(z=>z[0]===x && z[1]===y); }
-
-function nextTurn(){ 
-  current=(current+1)%4; 
-  dice=0; 
-  if(!humanPlayers.includes(allPlayers[current])) setTimeout(()=>aiMove(allPlayers[current]),500); 
-  else startTimer(); 
+function rollDice(){
+    rollDiceBtn.disabled=true;
+    let roll=Math.floor(Math.random()*6)+1;
+    animateDice(roll).then(()=>{
+        movePlayer(roll);
+        if(checkWinner())return showWinner(players[currentPlayerIndex].name);
+        currentPlayerIndex=(currentPlayerIndex+1)%numPlayers;
+        updateCurrentPlayerDisplay();
+        rollDiceBtn.disabled=false;
+        if(players[currentPlayerIndex].isAI)setTimeout(rollDice,800);
+    });
 }
 
-function aiMove(player){
-  rollDice();
-  setTimeout(()=>{
-    let movable=pawns[player].filter(p=>p.pos!==-1 || dice===6 && !p.finished);
-    if(movable.length>0){ let pawn=movable[Math.floor(Math.random()*movable.length)]; movePawn(pawn,player); }
-    else nextTurn();
-  },1500);
+function animateDice(roll){
+    return new Promise(res=>{
+        let frames=10,count=0;
+        let diceInterval=setInterval(()=>{
+            dice.innerText=Math.floor(Math.random()*6)+1;
+            count++;
+            if(count>=frames){ clearInterval(diceInterval); dice.innerText=roll; res(); }
+        },50);
+    });
 }
 
-// ========== Confetti ==========
-function showConfetti(){
-  for(let i=0;i<50;i++){
-    let div=document.createElement("div");
-    div.className="confetti-piece";
-    div.style.left=Math.random()*window.innerWidth+"px";
-    div.style.backgroundColor=["gold","red","blue","green"][Math.floor(Math.random()*4)];
-    document.body.appendChild(div);
-    setTimeout(()=>div.remove(),1500);
-  }
+function movePlayer(roll){
+    let player=players[currentPlayerIndex];
+    let bestTokenIndex=0;
+    // Medium AI: move token closest to home
+    if(player.isAI){
+        bestTokenIndex=0;
+        let minPos=player.position;
+        for(let i=0;i<players.length;i++){
+            if(players[i].position>minPos){ bestTokenIndex=i; minPos=players[i].position; }
+        }
+    }
+    player.position+=roll;
+    if(player.position>51)player.position=51;
+    setTokenPosition(currentPlayerIndex,player.position);
+    captureOpponent(player.position,currentPlayerIndex);
 }
 
-// ========== Draw Board ==========
-function drawBoard(){
-  ctx.clearRect(0,0,size,size);
-  // Draw grid
-  ctx.strokeStyle="black";
-  for(let i=0;i<15;i++) for(let j=0;j<15;j++) ctx.strokeRect(i*cell,j*cell,cell,cell);
-  // Draw safe zones
-  safeZones.forEach(([x,y])=>{ ctx.fillStyle="lightgreen"; ctx.fillRect(x*cell,y*cell,cell,cell); });
-  // Highlight current player's base
-  let base=[];
-  if(allPlayers[current]==="red") base=[[0,0],[0,1],[1,0],[1,1],[0,2],[2,0]];
-  if(allPlayers[current]==="blue") base=[[12,0],[13,0],[12,1],[13,1],[14,0],[14,2]];
-  if(allPlayers[current]==="green") base=[[0,12],[0,13],[1,12],[1,13],[0,14],[2,14]];
-  if(allPlayers[current]==="yellow") base=[[12,12],[13,12],[12,13],[13,13],[14,12],[14,14]];
-  base.forEach(([x,y])=>{ ctx.fillStyle="rgba(255,215,0,0.3)"; ctx.fillRect(x*cell,y*cell,cell,cell); });
-  // Draw pawns
-  for(let c in pawns) pawns[c].forEach(p=>p.draw());
-  requestAnimationFrame(drawBoard);
+function setTokenPosition(index,pos){
+    tokens[index].style.left=path[pos].x+'px';
+    tokens[index].style.top=path[pos].y+'px';
+}
+
+function captureOpponent(pos,current){
+    for(let i=0;i<tokens.length;i++){
+        if(i!==current && players[i].position===pos){
+            players[i].position=0;
+            setTokenPosition(i,0);
+        }
+    }
+}
+
+function updateCurrentPlayerDisplay(){
+    playerNameDisplay.innerText=players[currentPlayerIndex].name;
+}
+
+function checkWinner(){return players[currentPlayerIndex].position>=51;}
+
+function showWinner(name){
+    gameContainer.classList.add('hidden');
+    winnerDiv.classList.remove('hidden');
+    winnerText.innerText=`${name} Wins! 🎉`;
+    createFireworks();
+}
+
+function createFireworks(){
+    for(let i=0;i<20;i++){
+        let f=document.createElement('div');
+        f.classList.add('firework');
+        f.style.left=(Math.random()*400)+'px';
+        f.style.top=(Math.random()*400)+'px';
+        board.appendChild(f);
+        setTimeout(()=>f.remove(),1000);
+    }
 }
 </script>
 </body>
