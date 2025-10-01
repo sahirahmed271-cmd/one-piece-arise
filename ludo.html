@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>One Piece Ludo – Ultimate</title>
+<title>One Piece Ludo – Pro Ultimate</title>
 <style>
 body {
   margin:0;
@@ -11,6 +11,7 @@ body {
   text-align:center;
   background:url('one-piece-bg.jpg') center/cover no-repeat;
   color:gold;
+  overflow-x:hidden;
 }
 #playerSelect {
   margin-top:20px;
@@ -31,15 +32,28 @@ button {
   background:rgba(0,0,0,0.6);
   color:gold;
   cursor:pointer;
+  transition:0.3s;
 }
+button:hover { background: gold; color: black; }
 #diceResult {
   font-size:24px;
   font-weight:bold;
+  margin-top:10px;
+}
+.confetti-piece{
+  position:absolute;
+  width:8px; height:8px;
+  background:gold;
+  animation:confetti 1.5s linear forwards;
+}
+@keyframes confetti {
+  0%{opacity:1;transform:translateY(0) rotate(0deg);}
+  100%{opacity:0;transform:translateY(500px) rotate(720deg);}
 }
 </style>
 </head>
 <body>
-<h1>🎲 One Piece Ludo – Ultimate</h1>
+<h1>🎲 One Piece Ludo – Pro Ultimate</h1>
 
 <div id="playerSelect">
   <label>Select number of human players: </label>
@@ -64,7 +78,7 @@ button {
 <audio id="finishSound" src="https://www.fesliyanstudios.com/play-mp3/6905" preload="auto"></audio>
 
 <script>
-// ==================== Canvas & Audio ====================
+// ========== Canvas & Audio ==========
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const size = 600;
@@ -84,7 +98,7 @@ const moveSound = document.getElementById("moveSound");
 const captureSound = document.getElementById("captureSound");
 const finishSound = document.getElementById("finishSound");
 
-// ==================== Pawn Class ====================
+// ========== Pawn Class ==========
 class Pawn {
   constructor(color, homeX, homeY, path, imgSrc){
     this.color=color;
@@ -102,10 +116,18 @@ class Pawn {
     let x = this.pos===-1 ? this.homeX : this.path[this.pos][0]*cell+cell/2;
     let y = this.pos===-1 ? this.homeY : this.path[this.pos][1]*cell+cell/2;
     ctx.drawImage(this.img,x-cell/3,y-cell/3,cell*2/3,cell*2/3);
+    if(this.finished){
+      ctx.beginPath();
+      ctx.arc(x,y,cell/3+3,0,Math.PI*2);
+      ctx.strokeStyle="gold";
+      ctx.lineWidth=3;
+      ctx.stroke();
+      ctx.lineWidth=1;
+    }
   }
 }
 
-// ==================== Paths ====================
+// ========== Paths ==========
 function makePaths(){
   let path=[];
   for(let i=0;i<6;i++) path.push([i,6]);
@@ -118,7 +140,6 @@ function makePaths(){
   for(let i=13;i>=9;i--) path.push([0,i]);
   for(let i=1;i<6;i++) path.push([i,8]);
   for(let i=7;i<15;i++) path.push([6,i]);
-  for(let i=1;i<=5;i++) path.push([7,i]);
   return path;
 }
 
@@ -127,7 +148,7 @@ paths.blue=[...paths.red.slice(13),...paths.red.slice(0,13)];
 paths.green=[...paths.red.slice(26),...paths.red.slice(0,26)];
 paths.yellow=[...paths.red.slice(39),...paths.red.slice(0,39)];
 
-// ==================== Initialize Pawns with Images ====================
+// ========== Initialize Pawns ==========
 function initPawns(){
   pawns.red=[
     new Pawn("red",cell*2,cell*2,paths.red,"https://i.ibb.co/FYbNcxP/luffy.png"),
@@ -155,7 +176,7 @@ function initPawns(){
   ];
 }
 
-// ==================== Start Game ====================
+// ========== Start Game ==========
 function startGame(){
   numHumanPlayers=parseInt(document.getElementById("numPlayers").value);
   humanPlayers = allPlayers.slice(0,numHumanPlayers);
@@ -166,7 +187,7 @@ function startGame(){
   drawBoard();
 }
 
-// ==================== Dice Roll ====================
+// ========== Dice ==========
 function rollDice(){
   if(rolling) return;
   rolling=true; rollSound.play();
@@ -184,7 +205,7 @@ function rollDice(){
   },100);
 }
 
-// ==================== Timer ====================
+// ========== Timer ==========
 function startTimer(){
   clearInterval(timerInterval);
   let t=45;
@@ -195,7 +216,7 @@ function startTimer(){
   },1000);
 }
 
-// ==================== Movement and AI ====================
+// ========== Movement & AI ==========
 canvas.addEventListener("click",(e)=>{
   if(rolling || dice===0) return;
   clearInterval(timerInterval);
@@ -222,9 +243,9 @@ function movePawn(pawn,player){
       return;
     }
     if(pawn.pos===-1 && dice===6){ pawn.pos=0; moveSound.play(); }
-    else if(pawn.pos>=0){ let np=pawn.pos+1; if(np<pawn.path.length){ pawn.pos=np; moveSound.play(); captureCheck(pawn,player); if(pawn.pos===pawn.path.length-1){ pawn.finished=true; finishSound.play(); } } }
+    else if(pawn.pos>=0){ let np=pawn.pos+1; if(np<pawn.path.length){ pawn.pos=np; moveSound.play(); captureCheck(pawn,player); if(pawn.pos===pawn.path.length-1){ pawn.finished=true; finishSound.play(); showConfetti(); } } }
     steps--;
-    setTimeout(moveStep,100);
+    setTimeout(moveStep,200); // medium-fast
   };
   moveStep();
 }
@@ -232,12 +253,26 @@ function movePawn(pawn,player){
 function captureCheck(pawn,player){
   let [cx,cy]=pawn.path[pawn.pos];
   for(let c in pawns) if(c!==player) pawns[c].forEach(p=>{
-    if(p.pos>=0 && !p.finished){ let [ox,oy]=p.path[p.pos]; if(cx===ox && cy===oy && !isSafe(cx,cy)){ p.pos=-1; captureSound.play(); }}
+    if(p.pos>=0 && !p.finished){ let [ox,oy]=p.path[p.pos]; if(cx===ox && cy===oy && !isSafe(cx,cy)){ p.pos=-1; captureSound.play(); flashPawn(p); }}
   });
 }
+function flashPawn(p){
+  let flashes=0;
+  let f=setInterval(()=>{
+    flashes++;
+    if(flashes%2===0) ctx.globalAlpha=0.3; else ctx.globalAlpha=1;
+    if(flashes>4){ clearInterval(f); ctx.globalAlpha=1; }
+  },150);
+}
+
 function isSafe(x,y){ return safeZones.some(z=>z[0]===x && z[1]===y); }
 
-function nextTurn(){ current=(current+1)%4; dice=0; if(!humanPlayers.includes(allPlayers[current])) setTimeout(()=>aiMove(allPlayers[current]),500); else startTimer(); }
+function nextTurn(){ 
+  current=(current+1)%4; 
+  dice=0; 
+  if(!humanPlayers.includes(allPlayers[current])) setTimeout(()=>aiMove(allPlayers[current]),500); 
+  else startTimer(); 
+}
 
 function aiMove(player){
   rollDice();
@@ -248,15 +283,34 @@ function aiMove(player){
   },1500);
 }
 
-// ==================== Draw Board ====================
+// ========== Confetti ==========
+function showConfetti(){
+  for(let i=0;i<50;i++){
+    let div=document.createElement("div");
+    div.className="confetti-piece";
+    div.style.left=Math.random()*window.innerWidth+"px";
+    div.style.backgroundColor=["gold","red","blue","green"][Math.floor(Math.random()*4)];
+    document.body.appendChild(div);
+    setTimeout(()=>div.remove(),1500);
+  }
+}
+
+// ========== Draw Board ==========
 function drawBoard(){
   ctx.clearRect(0,0,size,size);
+  // Draw grid
   ctx.strokeStyle="black";
   for(let i=0;i<15;i++) for(let j=0;j<15;j++) ctx.strokeRect(i*cell,j*cell,cell,cell);
+  // Draw safe zones
   safeZones.forEach(([x,y])=>{ ctx.fillStyle="lightgreen"; ctx.fillRect(x*cell,y*cell,cell,cell); });
-  ctx.fillStyle="rgba(255,215,0,0.3)"; ctx.fillRect(0,0,size,cell);
-  ctx.font="20px Arial"; ctx.fillStyle="black";
-  ctx.fillText("Turn: "+allPlayers[current].toUpperCase(),10,20);
+  // Highlight current player's base
+  let base=[];
+  if(allPlayers[current]==="red") base=[[0,0],[0,1],[1,0],[1,1],[0,2],[2,0]];
+  if(allPlayers[current]==="blue") base=[[12,0],[13,0],[12,1],[13,1],[14,0],[14,2]];
+  if(allPlayers[current]==="green") base=[[0,12],[0,13],[1,12],[1,13],[0,14],[2,14]];
+  if(allPlayers[current]==="yellow") base=[[12,12],[13,12],[12,13],[13,13],[14,12],[14,14]];
+  base.forEach(([x,y])=>{ ctx.fillStyle="rgba(255,215,0,0.3)"; ctx.fillRect(x*cell,y*cell,cell,cell); });
+  // Draw pawns
   for(let c in pawns) pawns[c].forEach(p=>p.draw());
   requestAnimationFrame(drawBoard);
 }
