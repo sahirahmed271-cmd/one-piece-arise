@@ -7,13 +7,18 @@
 <style>
 body {
     margin: 0;
-    font-family: Arial;
+    font-family: Arial, sans-serif;
     background: url('one-piece-bg.jpg') no-repeat center center fixed;
     background-size: cover;
     text-align: center;
     color: gold;
 }
-h1 { margin-top: 20px; text-shadow: 2px 2px black; }
+h1 { 
+    margin-top: 20px; 
+    text-shadow: 2px 2px black; 
+}
+
+/* Button Styles */
 .game-btn {
     display: block;
     width: 250px;
@@ -26,12 +31,35 @@ h1 { margin-top: 20px; text-shadow: 2px 2px black; }
     color: gold;
     text-decoration: none;
     transition: 0.3s;
+    box-shadow: 0 0 10px rgba(255,215,0,0.4);
+    position: relative;
 }
-.game-btn:hover { background-color: rgba(255,215,0,0.8); color: black; }
+
+/* Hover Glow & Scale */
+.game-btn:hover {
+    background-color: rgba(255,215,0,0.8);
+    color: black;
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(255,215,0,0.8);
+}
+
+/* Emoji Bounce Animation for Adventure */
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+    40% {transform: translateY(-8px);}
+    60% {transform: translateY(-4px);}
+}
+.bounce-emoji::before {
+    content: "📜 ";
+    display: inline-block;
+    animation: bounce 1s infinite;
+}
 </style>
 </head>
 <body>
+
 <h1>🎴 One Piece Games Hub 🎴</h1>
+
 <a class="game-btn" href="car.html">🏎️ Car Game</a>
 <a class="game-btn" href="bike.html">🏍️ Bike Game</a>
 <a class="game-btn" href="flappy.html">🐦 Flappy Luffy</a>
@@ -39,9 +67,17 @@ h1 { margin-top: 20px; text-shadow: 2px 2px black; }
 <a class="game-btn" href="snake.html">🐍 Snake Game</a>
 <a class="game-btn" href="rps.html">✊✋✌️ Rock Paper Scissors</a>
 <a class="game-btn" href="ludo.html">🎲 Ludo Game</a>
-<a href="adventure.html" class="btn">Adventure + Hacker</a>
+
+<!-- Adventure Button with bouncing emoji -->
+<a class="game-btn bounce-emoji" href="adventure.html">Adventure</a>
+
+<!-- Hacker Button -->
+<a class="game-btn" href="hacker.html">💻 Hacker Console</a>
+
 </body>
 </html>
+
+
 
 
 
