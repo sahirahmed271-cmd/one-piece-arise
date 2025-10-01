@@ -27,7 +27,8 @@
         body {
             margin: 0;
             font-family: Arial, sans-serif;
-            background: url('https://i.ibb.co/7Nv5D6X/onepiece-bg.jpg') no-repeat center center fixed; /* Placeholder for a high-quality One Piece background */
+            /* ACTUAL ONE PIECE BACKGROUND IMAGE */
+            background: url('https://wallpapercave.com/wp/wp6665042.jpg') no-repeat center center fixed; /* High-quality One Piece scene */
             background-size: cover;
             color: var(--text-light);
             display: flex;
@@ -80,8 +81,8 @@
             margin: 0 auto;
             width: 400px;
             height: 400px;
-            /* Placeholder for a professional Ludo board image with One Piece elements */
-            background: url('path/to/professional-op-ludo-board.png') no-repeat center center;
+            /* ACTUAL ONE PIECE LUDO BOARD IMAGE */
+            background: url('https://i.ibb.co/x2Xx6Zm/ludo-board.png') no-repeat center center; /* Using your original Ludo board if custom OP one isn't available */
             background-size: contain;
             position: relative;
             border: 5px solid var(--op-gold);
@@ -90,26 +91,29 @@
         }
 
         .token {
-            width: 30px;
-            height: 30px;
+            width: 38px; /* Slightly larger tokens to better show characters */
+            height: 38px;
             border-radius: 50%;
             position: absolute;
             transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* Bouncy transition */
             border: 3px solid var(--text-light);
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
             background-size: cover;
-            /* Placeholder for Character Images on Tokens */
-            /* Default token background - You should replace this with character images */
-            background-image: url('path/to/luffy-icon.png');
+            background-position: center;
+            background-repeat: no-repeat;
+            /* Default background color if image fails or for base */
+            background-color: rgba(255, 255, 255, 0.2);
         }
 
-        /* Themed Token Colors (as fallback/border color) */
-        .token.red { border-color: var(--op-red); background-color: var(--op-red); }
-        .token.blue { border-color: var(--op-blue); background-color: var(--op-blue); }
-        .token.green { border-color: var(--op-green); background-color: var(--op-green); }
-        .token.yellow { border-color: var(--op-yellow); background-color: var(--op-yellow); }
-        .token.purple { border-color: var(--op-purple); background-color: var(--op-purple); }
-        .token.orange { border-color: var(--op-orange); background-color: var(--op-orange); }
+        /* Character Images for Tokens */
+        /* IMPORTANT: Replace these with better quality, appropriately sized, and ideally official images */
+        .token.red { border-color: var(--op-red); background-image: url('https://static.wikia.nocookie.net/onepiece/images/6/6f/Monkey_D._Luffy_Anime_Post_Timeskip_Infobox.png'); }
+        .token.blue { border-color: var(--op-blue); background-image: url('https://static.wikia.nocookie.net/onepiece/images/7/77/Roronoa_Zoro_Anime_Post_Timeskip_Infobox.png'); }
+        .token.green { border-color: var(--op-green); background-image: url('https://static.wikia.nocookie.net/onepiece/images/d/d3/Nami_Anime_Post_Timeskip_Infobox.png'); }
+        .token.yellow { border-color: var(--op-yellow); background-image: url('https://static.wikia.nocookie.net/onepiece/images/3/36/Usopp_Anime_Post_Timeskip_Infobox.png'); }
+        .token.purple { border-color: var(--op-purple); background-image: url('https://static.wikia.nocookie.net/onepiece/images/d/d2/Sanji_Anime_Post_Timeskip_Infobox.png'); }
+        .token.orange { border-color: var(--op-orange); background-image: url('https://static.wikia.nocookie.net/onepiece/images/f/f6/Tony_Tony_Chopper_Anime_Post_Timeskip_Infobox.png'); }
+
 
         /*
         ------------------------------------------
@@ -132,7 +136,7 @@
         }
 
         #player-name {
-            color: var(--op-red);
+            /* color will be set dynamically by JS based on player's color */
             text-shadow: 1px 1px #000;
         }
 
@@ -272,13 +276,22 @@
         let currentPlayerIndex = 0;
         let tokens = [];
         const colors = ["red", "blue", "green", "yellow", "purple", "orange"];
+        const colorHex = { // Map color names to hex for dynamic text color
+            "red": "#d90429",
+            "blue": "#0077b6",
+            "green": "#40916c",
+            "yellow": "#fca311",
+            "purple": "#7209b7",
+            "orange": "#ff7f00"
+        };
+
 
         // Ludo board path coordinates (simplified for a circle on a 400x400 board)
         const path = [];
         const boardSize = 400;
         const radius = 160;
         const center = boardSize / 2;
-        const tokenSize = 30; // Matches CSS
+        const tokenSize = 38; // Matches CSS token size
 
         for(let i = 0; i < 52; i++){
             let angle = (i / 52) * 2 * Math.PI - Math.PI / 2; // Start from the top
@@ -319,6 +332,7 @@
                 tokens.push(token);
                 setTokenPosition(i, 0);
             }
+            currentPlayerIndex = 0; // Reset current player for new game
             updateCurrentPlayerDisplay();
             if(players[currentPlayerIndex].isAI) setTimeout(rollDice, 1000); // Increased AI delay for better visual
         }
@@ -368,9 +382,6 @@
         function movePlayer(roll) {
             let player = players[currentPlayerIndex];
             
-            // Simplified AI logic (same as original, just moves the token forward)
-            // A more complex Ludo AI would check for captures and safety, but we keep it simple here.
-            
             let newPosition = player.position + roll;
             if(newPosition > 51) newPosition = 51; // 51 is the 'Home' spot
             
@@ -404,7 +415,8 @@
 
         function updateCurrentPlayerDisplay() {
             playerNameDisplay.innerText = players[currentPlayerIndex].name;
-            playerNameDisplay.style.color = players[currentPlayerIndex].color; // Update color for current player
+            // Use the hex color map for the text color
+            playerNameDisplay.style.color = colorHex[players[currentPlayerIndex].color]; 
         }
 
         // Winner is the first to reach the final position (51)
@@ -431,6 +443,7 @@
     </script>
 </body>
 </html>
+
 
 
 
