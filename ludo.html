@@ -1,198 +1,437 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>One Piece Ludo Official</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Pirata+One&display=swap');
-body {
-    margin:0; font-family:'Pirata One', cursive;
-    background:url('https://i.ibb.co/7Nv5D6X/onepiece-bg.jpg') no-repeat center center fixed;
-    background-size:cover; color:#fff;
-    display:flex; justify-content:center; align-items:center; min-height:100vh;
-}
-.container{text-align:center;width:100%;}
-.hidden{display:none;}
-#board{margin:20px auto; width:420px; height:420px; background:url('https://i.ibb.co/x2Xx6Zm/ludo-board.png') no-repeat center center; background-size:contain; position:relative;}
-.token{width:25px;height:25px;border-radius:50%;position:absolute;transition:all 0.3s ease;}
-.token.red{background:red;} .token.blue{background:blue;} .token.green{background:green;} .token.yellow{background:yellow;} .token.purple{background:purple;} .token.orange{background:orange;}
-#dice{width:50px;height:50px;margin:10px auto;font-size:30px;background:#fff;color:#000;border-radius:10px;display:flex;justify-content:center;align-items:center;}
-button{padding:10px 20px;font-size:16px;margin:5px;cursor:pointer;border:none;border-radius:5px;background:#ffcc00;transition:0.3s;}
-button:hover{background:#ffaa00;}
-#winner h2{font-size:2em;color:gold;text-shadow:2px 2px #000;}
-#controls{margin-top:10px;}
-/* Fireworks animation */
-@keyframes fireworks {
-  0% {transform: scale(0); opacity:1;}
-  50% {transform: scale(1.5); opacity:0.7;}
-  100% {transform: scale(0); opacity:0;}
-}
-.firework{
-  position:absolute; width:15px; height:15px; background:gold; border-radius:50%;
-  animation:fireworks 1s ease-out forwards;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>One Piece Ludo - Grand Line Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Pirata+One&display=swap" rel="stylesheet">
+    <style>
+        /*
+        ------------------------------------------
+        BASE & TYPOGRAPHY
+        ------------------------------------------
+        */
+        :root {
+            --op-gold: #ffcc00;
+            --op-red: #d90429;
+            --op-blue: #0077b6;
+            --op-green: #40916c;
+            --op-yellow: #fca311;
+            --op-purple: #7209b7;
+            --op-orange: #ff7f00;
+            --text-light: #f5f5f5;
+            --bg-dark: rgba(20, 20, 30, 0.9);
+            --font-main: 'Bangers', cursive;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: url('https://i.ibb.co/7Nv5D6X/onepiece-bg.jpg') no-repeat center center fixed; /* Placeholder for a high-quality One Piece background */
+            background-size: cover;
+            color: var(--text-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /*
+        ------------------------------------------
+        LAYOUT & CONTAINERS
+        ------------------------------------------
+        */
+        .container {
+            text-align: center;
+            width: 100%;
+            max-width: 900px;
+            background: var(--bg-dark);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            padding: 30px;
+        }
+
+        header h1 {
+            font-family: var(--font-main);
+            font-size: 4em;
+            color: var(--op-gold);
+            text-shadow: 4px 4px var(--op-red), 6px 6px #000;
+            margin-bottom: 20px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /*
+        ------------------------------------------
+        GAME BOARD & TOKENS
+        ------------------------------------------
+        */
+        #game-container {
+            display: grid;
+            grid-template-columns: 1fr 250px; /* Board on left, controls on right */
+            gap: 30px;
+            align-items: flex-start;
+        }
+
+        #board {
+            margin: 0 auto;
+            width: 400px;
+            height: 400px;
+            /* Placeholder for a professional Ludo board image with One Piece elements */
+            background: url('path/to/professional-op-ludo-board.png') no-repeat center center;
+            background-size: contain;
+            position: relative;
+            border: 5px solid var(--op-gold);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(255, 204, 0, 0.5);
+        }
+
+        .token {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            position: absolute;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* Bouncy transition */
+            border: 3px solid var(--text-light);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            background-size: cover;
+            /* Placeholder for Character Images on Tokens */
+            /* Default token background - You should replace this with character images */
+            background-image: url('path/to/luffy-icon.png');
+        }
+
+        /* Themed Token Colors (as fallback/border color) */
+        .token.red { border-color: var(--op-red); background-color: var(--op-red); }
+        .token.blue { border-color: var(--op-blue); background-color: var(--op-blue); }
+        .token.green { border-color: var(--op-green); background-color: var(--op-green); }
+        .token.yellow { border-color: var(--op-yellow); background-color: var(--op-yellow); }
+        .token.purple { border-color: var(--op-purple); background-color: var(--op-purple); }
+        .token.orange { border-color: var(--op-orange); background-color: var(--op-orange); }
+
+        /*
+        ------------------------------------------
+        CONTROLS & UI
+        ------------------------------------------
+        */
+        #controls {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+        }
+
+        #current-player {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            color: var(--op-gold);
+            font-family: var(--font-main);
+            letter-spacing: 1px;
+        }
+
+        #player-name {
+            color: var(--op-red);
+            text-shadow: 1px 1px #000;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 1.1em;
+            margin: 10px 0;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            background: var(--op-gold);
+            color: #333;
+            font-weight: bold;
+            transition: 0.2s transform, 0.2s background-color;
+            box-shadow: 0 4px 0 var(--op-yellow);
+            width: 100%;
+            font-family: var(--font-main);
+        }
+
+        button:hover {
+            background: #ffaa00;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 var(--op-yellow);
+        }
+
+        button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 var(--op-yellow);
+        }
+
+        #numPlayers {
+            padding: 10px;
+            font-size: 1.2em;
+            margin: 10px;
+            border-radius: 5px;
+            border: 2px solid var(--op-gold);
+            background: #fff;
+            color: #000;
+            width: 80px;
+            text-align: center;
+        }
+
+        /*
+        ------------------------------------------
+        DICE & WINNER
+        ------------------------------------------
+        */
+        #dice {
+            width: 80px;
+            height: 80px;
+            margin: 20px auto;
+            font-size: 3em;
+            background: var(--text-light);
+            color: var(--op-red);
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 4px solid var(--op-gold);
+            box-shadow: 0 0 10px rgba(255, 204, 0, 0.7);
+            font-family: var(--font-main);
+        }
+
+        #winner {
+            padding: 40px;
+            background: linear-gradient(45deg, var(--op-red), var(--bg-dark));
+            border: 5px solid var(--op-gold);
+            border-radius: 15px;
+        }
+
+        #winnerText {
+            font-size: 3em;
+            color: var(--op-gold);
+            text-shadow: 3px 3px var(--op-red);
+            font-family: var(--font-main);
+        }
+
+        /*
+        ------------------------------------------
+        FIREWORKS (Existing Animation Maintained)
+        ------------------------------------------
+        */
+        @keyframes fireworks {
+            0% { transform: scale(0); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.7; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+        .firework {
+            position: absolute; width: 15px; height: 15px; background: var(--op-gold); border-radius: 50%;
+            animation: fireworks 1s ease-out forwards;
+        }
+    </style>
 </head>
 <body>
-<div class="container">
-<header><h1>One Piece Ludo</h1></header>
+    <div class="container">
+        <header>
+            <h1>One Piece Ludo</h1>
+        </header>
 
-<div id="player-selection">
-<h2>Select Number of Players (2-6)</h2>
-<input type="number" id="numPlayers" min="2" max="6" value="2">
-<button id="startBtn">Start Game</button>
-</div>
+        <div id="player-selection">
+            <h2>Select Crew Size (2-6 Players)</h2>
+            <input type="number" id="numPlayers" min="2" max="6" value="2">
+            <button id="startBtn">Set Sail! (Start Game)</button>
+        </div>
 
-<div id="game-container" class="hidden">
-<div id="board"></div>
-<div id="controls">
-<div id="current-player">Current Player: <span id="player-name"></span></div>
-<button id="rollDiceBtn">Roll Dice</button>
-<div id="dice"></div>
-</div>
-</div>
+        <div id="game-container" class="hidden">
+            <div id="board">
+                </div>
+            <div id="controls">
+                <div id="current-player">Current Pirate: <span id="player-name"></span></div>
+                <button id="rollDiceBtn">Roll the Dice</button>
+                <div id="dice">6</div>
+            </div>
+        </div>
 
-<div id="winner" class="hidden">
-<h2 id="winnerText"></h2>
-<button id="restartBtn">Restart Game</button>
-</div>
-</div>
+        <div id="winner" class="hidden">
+            <h2 id="winnerText"></h2>
+            <button id="restartBtn">Play Again</button>
+        </div>
+    </div>
 
-<script>
-const startBtn=document.getElementById('startBtn');
-const numPlayersInput=document.getElementById('numPlayers');
-const playerSelection=document.getElementById('player-selection');
-const gameContainer=document.getElementById('game-container');
-const rollDiceBtn=document.getElementById('rollDiceBtn');
-const dice=document.getElementById('dice');
-const playerNameDisplay=document.getElementById('player-name');
-const winnerDiv=document.getElementById('winner');
-const winnerText=document.getElementById('winnerText');
-const restartBtn=document.getElementById('restartBtn');
-const board=document.getElementById('board');
+    <script>
+        const startBtn = document.getElementById('startBtn');
+        const numPlayersInput = document.getElementById('numPlayers');
+        const playerSelection = document.getElementById('player-selection');
+        const gameContainer = document.getElementById('game-container');
+        const rollDiceBtn = document.getElementById('rollDiceBtn');
+        const dice = document.getElementById('dice');
+        const playerNameDisplay = document.getElementById('player-name');
+        const winnerDiv = document.getElementById('winner');
+        const winnerText = document.getElementById('winnerText');
+        const restartBtn = document.getElementById('restartBtn');
+        const board = document.getElementById('board');
 
-let numPlayers=2;
-let players=[];
-let currentPlayerIndex=0;
-let tokens=[];
-const colors=["red","blue","green","yellow","purple","orange"];
+        let numPlayers = 2;
+        let players = [];
+        let currentPlayerIndex = 0;
+        let tokens = [];
+        const colors = ["red", "blue", "green", "yellow", "purple", "orange"];
 
-// Ludo board path coordinates (simplified)
-const path = [];
-for(let i=0;i<52;i++){
-    let angle=(i/52)*2*Math.PI;
-    let radius=150;
-    path.push({x:200+radius*Math.cos(angle)-12, y:200+radius*Math.sin(angle)-12});
-}
+        // Ludo board path coordinates (simplified for a circle on a 400x400 board)
+        const path = [];
+        const boardSize = 400;
+        const radius = 160;
+        const center = boardSize / 2;
+        const tokenSize = 30; // Matches CSS
 
-startBtn.addEventListener('click',()=>{
-    numPlayers=parseInt(numPlayersInput.value);
-    if(numPlayers<2||numPlayers>6)return alert("Choose between 2 and 6 players");
-    playerSelection.classList.add('hidden');
-    gameContainer.classList.remove('hidden');
-    setupPlayers();
-});
-
-restartBtn.addEventListener('click',()=>location.reload());
-
-function setupPlayers(){
-    players=[]; tokens=[]; board.innerHTML='';
-    for(let i=0;i<numPlayers;i++){
-        players.push({name:`Player ${i+1}`, color:colors[i], position:0, isAI:i>=2});
-        let token=document.createElement('div');
-        token.classList.add('token',colors[i]);
-        board.appendChild(token);
-        tokens.push(token);
-        setTokenPosition(i,0);
-    }
-    updateCurrentPlayerDisplay();
-    if(players[currentPlayerIndex].isAI)setTimeout(rollDice,800);
-}
-
-rollDiceBtn.addEventListener('click',rollDice);
-
-function rollDice(){
-    rollDiceBtn.disabled=true;
-    let roll=Math.floor(Math.random()*6)+1;
-    animateDice(roll).then(()=>{
-        movePlayer(roll);
-        if(checkWinner())return showWinner(players[currentPlayerIndex].name);
-        currentPlayerIndex=(currentPlayerIndex+1)%numPlayers;
-        updateCurrentPlayerDisplay();
-        rollDiceBtn.disabled=false;
-        if(players[currentPlayerIndex].isAI)setTimeout(rollDice,800);
-    });
-}
-
-function animateDice(roll){
-    return new Promise(res=>{
-        let frames=10,count=0;
-        let diceInterval=setInterval(()=>{
-            dice.innerText=Math.floor(Math.random()*6)+1;
-            count++;
-            if(count>=frames){ clearInterval(diceInterval); dice.innerText=roll; res(); }
-        },50);
-    });
-}
-
-function movePlayer(roll){
-    let player=players[currentPlayerIndex];
-    let bestTokenIndex=0;
-    // Medium AI: move token closest to home
-    if(player.isAI){
-        bestTokenIndex=0;
-        let minPos=player.position;
-        for(let i=0;i<players.length;i++){
-            if(players[i].position>minPos){ bestTokenIndex=i; minPos=players[i].position; }
+        for(let i = 0; i < 52; i++){
+            let angle = (i / 52) * 2 * Math.PI - Math.PI / 2; // Start from the top
+            let x = center + radius * Math.cos(angle) - (tokenSize / 2);
+            let y = center + radius * Math.sin(angle) - (tokenSize / 2);
+            path.push({ x: x, y: y });
         }
-    }
-    player.position+=roll;
-    if(player.position>51)player.position=51;
-    setTokenPosition(currentPlayerIndex,player.position);
-    captureOpponent(player.position,currentPlayerIndex);
-}
 
-function setTokenPosition(index,pos){
-    tokens[index].style.left=path[pos].x+'px';
-    tokens[index].style.top=path[pos].y+'px';
-}
+        // Home position (center of the board)
+        path[51] = { x: center - (tokenSize / 2), y: center - (tokenSize / 2) };
 
-function captureOpponent(pos,current){
-    for(let i=0;i<tokens.length;i++){
-        if(i!==current && players[i].position===pos){
-            players[i].position=0;
-            setTokenPosition(i,0);
+
+        startBtn.addEventListener('click', () => {
+            numPlayers = parseInt(numPlayersInput.value);
+            if(numPlayers < 2 || numPlayers > 6) return alert("Choose between 2 and 6 players");
+            playerSelection.classList.add('hidden');
+            gameContainer.classList.remove('hidden');
+            setupPlayers();
+        });
+
+        restartBtn.addEventListener('click', () => location.reload());
+
+        function setupPlayers() {
+            players = []; tokens = []; board.innerHTML = '';
+            // Assigning One Piece names to the first 6 players
+            const opNames = ["Luffy", "Zoro", "Nami", "Usopp", "Sanji", "Chopper"];
+
+            for(let i = 0; i < numPlayers; i++){
+                players.push({
+                    name: opNames[i % opNames.length],
+                    color: colors[i],
+                    position: 0, // 0 is start
+                    isAI: i >= 2 // AI for Player 3 and onwards
+                });
+                let token = document.createElement('div');
+                token.classList.add('token', colors[i]);
+                board.appendChild(token);
+                tokens.push(token);
+                setTokenPosition(i, 0);
+            }
+            updateCurrentPlayerDisplay();
+            if(players[currentPlayerIndex].isAI) setTimeout(rollDice, 1000); // Increased AI delay for better visual
         }
-    }
-}
 
-function updateCurrentPlayerDisplay(){
-    playerNameDisplay.innerText=players[currentPlayerIndex].name;
-}
+        rollDiceBtn.addEventListener('click', rollDice);
 
-function checkWinner(){return players[currentPlayerIndex].position>=51;}
+        function rollDice() {
+            rollDiceBtn.disabled = true;
+            let roll = Math.floor(Math.random() * 6) + 1;
+            
+            animateDice(roll).then(() => {
+                movePlayer(roll);
+                
+                // Check win condition right after the move
+                if(checkWinner()) {
+                    return showWinner(players[currentPlayerIndex].name);
+                }
+                
+                // If it was a 6, the player gets another turn (Ludo Rule)
+                if (roll !== 6) {
+                    currentPlayerIndex = (currentPlayerIndex + 1) % numPlayers;
+                }
+                
+                updateCurrentPlayerDisplay();
+                rollDiceBtn.disabled = false;
+                
+                // Check if the next player is AI
+                if(players[currentPlayerIndex].isAI) setTimeout(rollDice, 1000);
+            });
+        }
 
-function showWinner(name){
-    gameContainer.classList.add('hidden');
-    winnerDiv.classList.remove('hidden');
-    winnerText.innerText=`${name} Wins! 🎉`;
-    createFireworks();
-}
+        function animateDice(roll) {
+            return new Promise(res => {
+                let frames = 15, count = 0;
+                let diceInterval = setInterval(() => {
+                    dice.innerText = Math.floor(Math.random() * 6) + 1;
+                    count++;
+                    if(count >= frames){ 
+                        clearInterval(diceInterval); 
+                        dice.innerText = roll; 
+                        res(); 
+                    }
+                }, 70);
+            });
+        }
 
-function createFireworks(){
-    for(let i=0;i<20;i++){
-        let f=document.createElement('div');
-        f.classList.add('firework');
-        f.style.left=(Math.random()*400)+'px';
-        f.style.top=(Math.random()*400)+'px';
-        board.appendChild(f);
-        setTimeout(()=>f.remove(),1000);
-    }
-}
-</script>
+        function movePlayer(roll) {
+            let player = players[currentPlayerIndex];
+            
+            // Simplified AI logic (same as original, just moves the token forward)
+            // A more complex Ludo AI would check for captures and safety, but we keep it simple here.
+            
+            let newPosition = player.position + roll;
+            if(newPosition > 51) newPosition = 51; // 51 is the 'Home' spot
+            
+            player.position = newPosition;
+            setTokenPosition(currentPlayerIndex, player.position);
+            
+            // Only capture if not on the 'Home' spot
+            if (player.position < 51) {
+                captureOpponent(player.position, currentPlayerIndex);
+            }
+        }
+
+        function setTokenPosition(index, pos) {
+            tokens[index].style.left = path[pos].x + 'px';
+            tokens[index].style.top = path[pos].y + 'px';
+        }
+
+        function captureOpponent(pos, current) {
+            for(let i = 0; i < tokens.length; i++){
+                // Check if opponent (i) is not current player and is at the same position (pos)
+                if(i !== current && players[i].position === pos){
+                    // Send opponent back to start (position 0)
+                    players[i].position = 0;
+                    setTokenPosition(i, 0);
+                    // Add a quick visual flash for the capture (optional)
+                    tokens[i].style.transform = 'scale(0.5)';
+                    setTimeout(() => tokens[i].style.transform = 'scale(1)', 300);
+                }
+            }
+        }
+
+        function updateCurrentPlayerDisplay() {
+            playerNameDisplay.innerText = players[currentPlayerIndex].name;
+            playerNameDisplay.style.color = players[currentPlayerIndex].color; // Update color for current player
+        }
+
+        // Winner is the first to reach the final position (51)
+        function checkWinner() { return players[currentPlayerIndex].position === 51; }
+
+        function showWinner(name) {
+            gameContainer.classList.add('hidden');
+            winnerDiv.classList.remove('hidden');
+            winnerText.innerText = `${name} is the Pirate King! 👑`;
+            createFireworks();
+        }
+
+        function createFireworks() {
+            for(let i = 0; i < 30; i++){ // More fireworks for a professional look
+                let f = document.createElement('div');
+                f.classList.add('firework');
+                // Fireworks explode across the whole container for better effect
+                f.style.left = (Math.random() * gameContainer.offsetWidth) + 'px';
+                f.style.top = (Math.random() * gameContainer.offsetHeight) + 'px';
+                winnerDiv.appendChild(f); // Append to winner div to contain them
+                setTimeout(() => f.remove(), 1000);
+            }
+        }
+    </script>
 </body>
 </html>
+
 
 
 
