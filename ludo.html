@@ -3,14 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>One Piece Ludo – Pro Version</title>
+<title>One Piece Ludo – Ultimate</title>
 <style>
 body {
   margin:0;
   font-family:Arial;
+  text-align:center;
   background:url('one-piece-bg.jpg') center/cover no-repeat;
   color:gold;
-  text-align:center;
+}
+#playerSelect {
+  margin-top:20px;
 }
 #gameCanvas {
   display:block;
@@ -36,10 +39,24 @@ button {
 </style>
 </head>
 <body>
-<h1>🎲 One Piece Ludo – Pro Version</h1>
-<canvas id="gameCanvas" width="600" height="600"></canvas><br>
-<button onclick="rollDice()">Roll Dice</button>
-<div id="diceResult">Dice: -</div>
+<h1>🎲 One Piece Ludo – Ultimate</h1>
+
+<div id="playerSelect">
+  <label>Select number of human players: </label>
+  <select id="numPlayers">
+    <option value="1">1</option>
+    <option value="2" selected>2</option>
+    <option value="3">3</option>
+    <option value="4">4</option>
+  </select>
+  <button onclick="startGame()">Start Game</button>
+</div>
+
+<canvas id="gameCanvas" width="600" height="600"></canvas>
+<div>
+  <button onclick="rollDice()" id="rollBtn">Roll Dice</button>
+  <div id="diceResult">Dice: -</div>
+</div>
 
 <audio id="rollSound" src="https://www.fesliyanstudios.com/play-mp3/387" preload="auto"></audio>
 <audio id="moveSound" src="https://www.fesliyanstudios.com/play-mp3/6539" preload="auto"></audio>
@@ -47,44 +64,48 @@ button {
 <audio id="finishSound" src="https://www.fesliyanstudios.com/play-mp3/6905" preload="auto"></audio>
 
 <script>
-// Canvas
+// ==================== Canvas & Audio ====================
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const size = 600;
 const cell = size/15;
+const safeZones=[[1,6],[2,8],[6,1],[8,2],[13,6],[12,8],[6,13],[8,12]];
 
-// Sounds
+let numHumanPlayers = 2;
+let humanPlayers = [];
+let allPlayers = ["red","blue","green","yellow"];
+let pawns = {};
+let paths = {};
+let dice=0, rolling=false, current=0, timerInterval;
+
+// Audio
 const rollSound = document.getElementById("rollSound");
 const moveSound = document.getElementById("moveSound");
 const captureSound = document.getElementById("captureSound");
 const finishSound = document.getElementById("finishSound");
 
-// Board & paths
-const safeZones=[[1,6],[2,8],[6,1],[8,2],[13,6],[12,8],[6,13],[8,12]];
-
-// Pawn class
+// ==================== Pawn Class ====================
 class Pawn {
-  constructor(color, homeX, homeY, path) {
+  constructor(color, homeX, homeY, path, imgSrc){
     this.color=color;
     this.homeX=homeX;
     this.homeY=homeY;
     this.path=path;
     this.pos=-1;
     this.finished=false;
+    this.img=new Image();
+    this.img.src=imgSrc;
+    this.x=homeX;
+    this.y=homeY;
   }
-  draw() {
-    let x,y;
-    if(this.pos===-1){ x=this.homeX; y=this.homeY; }
-    else { let [px,py]=this.path[this.pos]; x=px*cell+cell/2; y=py*cell+cell/2; }
-    ctx.beginPath();
-    ctx.fillStyle=this.color;
-    ctx.arc(x,y,cell/3,0,Math.PI*2);
-    ctx.fill();
-    ctx.strokeStyle="black"; ctx.stroke();
+  draw(){
+    let x = this.pos===-1 ? this.homeX : this.path[this.pos][0]*cell+cell/2;
+    let y = this.pos===-1 ? this.homeY : this.path[this.pos][1]*cell+cell/2;
+    ctx.drawImage(this.img,x-cell/3,y-cell/3,cell*2/3,cell*2/3);
   }
 }
 
-// Create base path
+// ==================== Paths ====================
 function makePaths(){
   let path=[];
   for(let i=0;i<6;i++) path.push([i,6]);
@@ -101,34 +122,51 @@ function makePaths(){
   return path;
 }
 
-// Paths
-let paths={ red:makePaths(), blue:[], green:[], yellow:[] };
+paths.red = makePaths();
 paths.blue=[...paths.red.slice(13),...paths.red.slice(0,13)];
 paths.green=[...paths.red.slice(26),...paths.red.slice(0,26)];
 paths.yellow=[...paths.red.slice(39),...paths.red.slice(0,39)];
 
-// Pawns
-let pawns={ red:[], blue:[], green:[], yellow:[] };
+// ==================== Initialize Pawns with Images ====================
 function initPawns(){
-  pawns.red=[ new Pawn("red",cell*2,cell*2,paths.red), new Pawn("red",cell*4,cell*2,paths.red),
-              new Pawn("red",cell*2,cell*4,paths.red), new Pawn("red",cell*4,cell*4,paths.red) ];
-  pawns.blue=[ new Pawn("blue",cell*11,cell*2,paths.blue), new Pawn("blue",cell*13,cell*2,paths.blue),
-               new Pawn("blue",cell*11,cell*4,paths.blue), new Pawn("blue",cell*13,cell*4,paths.blue) ];
-  pawns.green=[ new Pawn("green",cell*2,cell*11,paths.green), new Pawn("green",cell*4,cell*11,paths.green),
-                new Pawn("green",cell*2,cell*13,paths.green), new Pawn("green",cell*4,cell*13,paths.green) ];
-  pawns.yellow=[ new Pawn("yellow",cell*11,cell*11,paths.yellow), new Pawn("yellow",cell*13,cell*11,paths.yellow),
-                 new Pawn("yellow",cell*11,cell*13,paths.yellow), new Pawn("yellow",cell*13,cell*13,paths.yellow) ];
+  pawns.red=[
+    new Pawn("red",cell*2,cell*2,paths.red,"https://i.ibb.co/FYbNcxP/luffy.png"),
+    new Pawn("red",cell*4,cell*2,paths.red,"https://i.ibb.co/FYbNcxP/luffy.png"),
+    new Pawn("red",cell*2,cell*4,paths.red,"https://i.ibb.co/FYbNcxP/luffy.png"),
+    new Pawn("red",cell*4,cell*4,paths.red,"https://i.ibb.co/FYbNcxP/luffy.png")
+  ];
+  pawns.blue=[
+    new Pawn("blue",cell*11,cell*2,paths.blue,"https://i.ibb.co/gzPvJbK/zoro.png"),
+    new Pawn("blue",cell*13,cell*2,paths.blue,"https://i.ibb.co/gzPvJbK/zoro.png"),
+    new Pawn("blue",cell*11,cell*4,paths.blue,"https://i.ibb.co/gzPvJbK/zoro.png"),
+    new Pawn("blue",cell*13,cell*4,paths.blue,"https://i.ibb.co/gzPvJbK/zoro.png")
+  ];
+  pawns.green=[
+    new Pawn("green",cell*2,cell*11,paths.green,"https://i.ibb.co/6s5xDPS/nami.png"),
+    new Pawn("green",cell*4,cell*11,paths.green,"https://i.ibb.co/6s5xDPS/nami.png"),
+    new Pawn("green",cell*2,cell*13,paths.green,"https://i.ibb.co/6s5xDPS/nami.png"),
+    new Pawn("green",cell*4,cell*13,paths.green,"https://i.ibb.co/6s5xDPS/nami.png")
+  ];
+  pawns.yellow=[
+    new Pawn("yellow",cell*11,cell*11,paths.yellow,"https://i.ibb.co/FK4sGXd/sanji.png"),
+    new Pawn("yellow",cell*13,cell*11,paths.yellow,"https://i.ibb.co/FK4sGXd/sanji.png"),
+    new Pawn("yellow",cell*11,cell*13,paths.yellow,"https://i.ibb.co/FK4sGXd/sanji.png"),
+    new Pawn("yellow",cell*13,cell*13,paths.yellow,"https://i.ibb.co/FK4sGXd/sanji.png")
+  ];
 }
-initPawns();
 
-// Game
-let dice=0;
-let rolling=false;
-let turnOrder=["red","blue","green","yellow"];
-let current=0;
-let timerInterval;
+// ==================== Start Game ====================
+function startGame(){
+  numHumanPlayers=parseInt(document.getElementById("numPlayers").value);
+  humanPlayers = allPlayers.slice(0,numHumanPlayers);
+  initPawns();
+  document.getElementById("playerSelect").style.display="none";
+  current=0;
+  dice=0;
+  drawBoard();
+}
 
-// Roll Dice
+// ==================== Dice Roll ====================
 function rollDice(){
   if(rolling) return;
   rolling=true; rollSound.play();
@@ -139,63 +177,68 @@ function rollDice(){
     count++;
     if(count>10){
       clearInterval(interval);
-      document.getElementById("diceResult").innerText="Dice: "+dice+" ("+turnOrder[current].toUpperCase()+")";
-      rolling=false; startTimer();
+      document.getElementById("diceResult").innerText="Dice: "+dice+" ("+allPlayers[current].toUpperCase()+")";
+      rolling=false;
+      startTimer();
     }
   },100);
 }
 
-// Timer
+// ==================== Timer ====================
 function startTimer(){
   clearInterval(timerInterval);
   let t=45;
   timerInterval=setInterval(()=>{
-    document.getElementById("diceResult").innerText+=" | "+t+"s left";
+    document.getElementById("diceResult").innerText="Dice: "+dice+" | "+allPlayers[current].toUpperCase()+" turn | "+t+"s left";
     t--;
     if(t<0){ clearInterval(timerInterval); nextTurn(); }
   },1000);
 }
 
-// Click pawn to move
+// ==================== Movement and AI ====================
 canvas.addEventListener("click",(e)=>{
   if(rolling || dice===0) return;
   clearInterval(timerInterval);
   let rect=canvas.getBoundingClientRect();
-  let mx=e.clientX-rect.left, my=e.clientY-rect.top;
-  let player=turnOrder[current];
+  let mx=e.clientX-rect.left;
+  let my=e.clientY-rect.top;
+  let player=allPlayers[current];
+  if(!humanPlayers.includes(player)) return;
   pawns[player].forEach(pawn=>{
     let [cx,cy]=pawn.pos>=0 ? pawn.path[pawn.pos] : [pawn.homeX/cell,pawn.homeY/cell];
     let px=cx*cell+cell/2, py=cy*cell+cell/2;
-    if(Math.sqrt((mx-px)**2+(my-py)**2)<cell/2){ movePawn(pawn,player); }
+    if(Math.sqrt((mx-px)**2+(my-py)**2)<cell/2) movePawn(pawn,player);
   });
 });
 
-// Move pawn
 function movePawn(pawn,player){
   if(pawn.finished) return;
-  if(pawn.pos===-1 && dice===6){ pawn.pos=0; moveSound.play(); }
-  else if(pawn.pos>=0){ let np=pawn.pos+dice; if(np<pawn.path.length){ pawn.pos=np; moveSound.play(); captureCheck(pawn,player);
-    if(pawn.pos===pawn.path.length-1){ pawn.finished=true; finishSound.play(); } } }
-  if(pawns[player].every(p=>p.finished)){ alert(player.toUpperCase()+" WINS!"); resetGame(); return; }
-  if(dice!==6) nextTurn();
-  dice=0;
+  let steps=dice;
+  let moveStep = ()=>{
+    if(steps<=0){ 
+      dice=0; 
+      if(!pawn.finished && !humanPlayers.includes(allPlayers[current])) setTimeout(()=>aiMove(allPlayers[current]),500);
+      else if(steps<=0) nextTurn(); 
+      return;
+    }
+    if(pawn.pos===-1 && dice===6){ pawn.pos=0; moveSound.play(); }
+    else if(pawn.pos>=0){ let np=pawn.pos+1; if(np<pawn.path.length){ pawn.pos=np; moveSound.play(); captureCheck(pawn,player); if(pawn.pos===pawn.path.length-1){ pawn.finished=true; finishSound.play(); } } }
+    steps--;
+    setTimeout(moveStep,100);
+  };
+  moveStep();
 }
 
-// Capture
 function captureCheck(pawn,player){
   let [cx,cy]=pawn.path[pawn.pos];
   for(let c in pawns) if(c!==player) pawns[c].forEach(p=>{
-    if(p.pos>=0 && !p.finished){
-      let [ox,oy]=p.path[p.pos]; if(cx===ox && cy===oy && !isSafe(cx,cy)){ p.pos=-1; captureSound.play(); }
-    }
+    if(p.pos>=0 && !p.finished){ let [ox,oy]=p.path[p.pos]; if(cx===ox && cy===oy && !isSafe(cx,cy)){ p.pos=-1; captureSound.play(); }}
   });
 }
 function isSafe(x,y){ return safeZones.some(z=>z[0]===x && z[1]===y); }
 
-// Next turn
-function nextTurn(){ current=(current+1)%4; dice=0; if(turnOrder[current]==="blue") setTimeout(()=>aiMove("blue"),500); else startTimer(); }
+function nextTurn(){ current=(current+1)%4; dice=0; if(!humanPlayers.includes(allPlayers[current])) setTimeout(()=>aiMove(allPlayers[current]),500); else startTimer(); }
 
-// AI move
 function aiMove(player){
   rollDice();
   setTimeout(()=>{
@@ -205,25 +248,24 @@ function aiMove(player){
   },1500);
 }
 
-// Reset
-function resetGame(){ initPawns(); current=0; dice=0; }
-
-// Draw
-function draw(){
+// ==================== Draw Board ====================
+function drawBoard(){
   ctx.clearRect(0,0,size,size);
   ctx.strokeStyle="black";
   for(let i=0;i<15;i++) for(let j=0;j<15;j++) ctx.strokeRect(i*cell,j*cell,cell,cell);
   safeZones.forEach(([x,y])=>{ ctx.fillStyle="lightgreen"; ctx.fillRect(x*cell,y*cell,cell,cell); });
   ctx.fillStyle="rgba(255,215,0,0.3)"; ctx.fillRect(0,0,size,cell);
   ctx.font="20px Arial"; ctx.fillStyle="black";
-  ctx.fillText("Turn: "+turnOrder[current].toUpperCase(),10,20);
+  ctx.fillText("Turn: "+allPlayers[current].toUpperCase(),10,20);
   for(let c in pawns) pawns[c].forEach(p=>p.draw());
-  requestAnimationFrame(draw);
+  requestAnimationFrame(drawBoard);
 }
-draw();
 </script>
 </body>
 </html>
+
+
+
 
 
 
