@@ -1,283 +1,127 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Choose Your Adventure + Fake Hacker — One File</title>
-  <style>
-    :root{--bg:#0b1020;--card:#0f1724;--accent:#f59e0b;--muted:#94a3b8;--glass: rgba(255,255,255,0.03)}
-    *{box-sizing:border-box;font-family:Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial}
-    html,body{height:100%;background:linear-gradient(180deg,#071029 0%, #071a2a 100%);color:#e6eef8;margin:0}
-    .wrap{max-width:980px;margin:28px auto;padding:18px}
-    header{display:flex;gap:12px;align-items:center;margin-bottom:18px}
-    h1{font-size:20px;margin:0}
-    .tabs{margin-left:auto;display:flex;gap:8px}
-    .btn{background:var(--glass);border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:10px;color:var(--muted);cursor:pointer}
-    .btn.active{background:linear-gradient(90deg, rgba(245,158,11,0.12), rgba(245,158,11,0.06));color:#fff;border-color:rgba(245,158,11,0.25)}
-    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 6px 30px rgba(4,6,15,0.6)}
-    .scene-title{font-weight:700;margin:0 0 6px 0}
-    .scene-text{color:var(--muted);margin-bottom:14px;line-height:1.5}
-    .choices{display:flex;flex-direction:column;gap:8px}
-    .choice-btn{padding:10px 12px;border-radius:8px;border:none;background:#081422;color:#bfe0ff;cursor:pointer;text-align:left}
-    .choice-btn:hover{transform:translateY(-2px)}
-    .meta{display:flex;gap:10px;align-items:center;margin-top:12px;color:var(--muted)}
-    .small{font-size:13px}
-    .controls{display:flex;gap:8px;margin-top:12px}
-    .secondary{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
-    .progress{height:8px;background:#073045;border-radius:10px;overflow:hidden}
-    .progress > i{display:block;height:100%;background:linear-gradient(90deg,#0ea5a6,#60a5fa);width:0}
-
-    /* Hacker styles */
-    .hacker-area{display:none}
-    .terminal{background:#000;color:#33ff66;padding:16px;border-radius:8px;height:320px;overflow:auto;font-family:monospace;font-size:13px}
-    .terminal .line{white-space:pre-wrap}
-    .input-row{display:flex;gap:8px;margin-top:12px}
-    .text-input{flex:1;padding:10px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:#07111b;color:#e6eef8}
-    .small-muted{font-size:13px;color:var(--muted)}
-
-    /* Responsive */
-    @media (max-width:640px){.wrap{padding:12px} .choice-btn{font-size:14px}}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One Piece Adventure</title>
+<style>
+  /* ====== Theme same as https://one-piece-arise.pages.dev/ ====== */
+  body{margin:0;font-family:Inter, system-ui, sans-serif;background:linear-gradient(180deg,#071029,#071a2a);color:#e6eef8;}
+  a{color:#fbbf24;text-decoration:none;}
+  .nav{display:flex;gap:12px;padding:16px;background:rgba(0,0,0,0.6);}
+  .nav a{padding:8px 14px;background:linear-gradient(90deg,#f59e0b,#fcd34d);border-radius:8px;font-weight:600;transition:0.2s;}
+  .nav a:hover{opacity:0.85;}
+  .wrap{max-width:980px;margin:24px auto;padding:16px;}
+  .card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:18px;box-shadow:0 6px 20px rgba(0,0,0,0.6);}
+  .scene-title{font-size:20px;font-weight:700;margin:0 0 8px 0;}
+  .scene-text{line-height:1.5;color:#cbd5e1;margin-bottom:12px;}
+  .choices{display:flex;flex-direction:column;gap:10px;margin-bottom:12px;}
+  .choice-btn{background:linear-gradient(90deg,#f59e0b,#fcd34d);border:none;padding:10px 14px;border-radius:8px;font-weight:600;color:#000;cursor:pointer;transition:0.2s;}
+  .choice-btn:hover{opacity:0.85;transform:translateY(-1px);}
+  .controls{display:flex;gap:8px;align-items:center;margin-top:12px;}
+  .secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:#cbd5e1;cursor:pointer;padding:6px 10px;border-radius:6px;}
+  .progress{height:8px;background:#073045;border-radius:10px;overflow:hidden;margin-top:8px;}
+  .progress > i{display:block;height:100%;background:linear-gradient(90deg,#f59e0b,#fcd34d);width:0%;}
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div>
-        <h1>Choose Your Adventure — + Fake Hacker</h1>
-        <div class="small-muted">Drop this file into your GitHub Pages (index.html) and you're set.</div>
-      </div>
-      <div class="tabs">
-        <button id="tabAdventure" class="btn active">Adventure</button>
-        <button id="tabHacker" class="btn">Fake Hacker</button>
-      </div>
-    </header>
 
-    <main>
-      <section id="adventure" class="card">
-        <div>
-          <h2 id="sceneTitle" class="scene-title">Scene</h2>
-          <div id="sceneText" class="scene-text"></div>
-          <div class="choices" id="choices"></div>
+<!-- NAV -->
+<div class="nav">
+  <a href="index.html">Home</a>
+  <a href="adventure.html">Adventure</a>
+  <a href="hacker.html">Hacker</a>
+</div>
 
-          <div class="controls">
-            <button id="backBtn" class="btn secondary">⬅ Back</button>
-            <button id="restartBtn" class="btn secondary">⟳ Restart</button>
-            <div style="flex:1"></div>
-            <div class="small-muted">Scene <span id="sceneIndex">0</span> / <span id="sceneTotal">0</span></div>
-          </div>
-
-          <div style="margin-top:12px">
-            <div class="progress"><i id="progressBar" style="width:0%"></i></div>
-          </div>
-        </div>
-      </section>
-
-      <section id="hacker" class="card hacker-area" style="margin-top:18px">
-        <h2 class="scene-title">Fake Hacker Console</h2>
-        <div class="scene-text small-muted">Type something and press ENTER — watch the harmless "hacking" show. Great for pranks and dramatic site effects.</div>
-        <div class="terminal" id="terminal"></div>
-        <div class="input-row">
-          <input id="hackInput" class="text-input" placeholder="Type target (e.g. " + ' "StrawHatBank"' + ") and press ENTER" />
-          <button id="hackBtn" class="btn">Run</button>
-        </div>
-        <div style="margin-top:10px;color:var(--muted);font-size:13px">Tip: This is purely visual — no real hacking. Use it for fun.</div>
-      </section>
-
-    </main>
+<div class="wrap">
+  <div class="card">
+    <h2 class="scene-title" id="sceneTitle">Scene</h2>
+    <div class="scene-text" id="sceneText"></div>
+    <div class="choices" id="choices"></div>
+    <div class="controls">
+      <button class="secondary" id="backBtn">⬅ Back</button>
+      <button class="secondary" id="restartBtn">⟳ Restart</button>
+      <div style="flex:1"></div>
+      <div style="color:#94a3b8; font-size:13px">Scene <span id="sceneIndex">0</span> / <span id="sceneTotal">50</span></div>
+    </div>
+    <div class="progress"><i id="progressBar"></i></div>
   </div>
+</div>
 
-  <script>
-  // -------------------- Adventure data generator --------------------
-  // We'll programmatically generate 50 scenes with branching choices and multiple endings.
-  (function(){
-    const totalScenes = 50;
-    const endings = ["You found a secret treasure and retired as a legend.",
-                     "You fell into a trap and learned an important lesson.",
-                     "You became the captain of a new crew and sailed away.",
-                     "You were turned into a famous bard's tale.",
-                     "You sacrificed yourself to save a friend and were remembered."];
+<script>
+// Adventure JS
+const totalScenes = 50;
+const endings = [
+  "You found a secret treasure and retired as a legend.",
+  "You fell into a trap and learned an important lesson.",
+  "You became the captain of a new crew and sailed away.",
+  "You were turned into a famous bard's tale.",
+  "You sacrificed yourself to save a friend and were remembered."
+];
 
-    // Generate scene objects: a few endings sprinkled, otherwise branches forward/back.
-    const story = {};
-    for(let i=1;i<=totalScenes;i++){
-      const id = 's'+i;
-      if(i===totalScenes || Math.random() < 0.12){
-        // make it an ending
-        const endingText = endings[Math.floor(Math.random()*endings.length)];
-        story[id] = { title: `Ending ${i}`, text: endingText, choices: [] , ending:true };
-      } else {
-        // make a normal scene
-        const a = Math.random();
-        let choices = [];
-        // Usually 2 choices
-        const next1 = 's' + Math.min(totalScenes, i + (Math.floor(Math.random()*3)+1));
-        const next2 = Math.max(1, 's' + (i + (Math.floor(Math.random()*5)-2))).replace(/s-/, 's1');
-        // but ensure proper next values
-        function clampScene(n){ if(n<1) return 1; if(n>totalScenes) return totalScenes; return n }
-        const n1 = clampScene(i + (Math.floor(Math.random()*3)+1));
-        const n2 = clampScene(i + (Math.floor(Math.random()*7)-2));
-        choices.push({text: choiceText(i,n1), next:'s'+n1});
-        choices.push({text: choiceText(i,n2), next:'s'+n2});
-        story[id] = { title: `Scene ${i}`, text: sceneText(i), choices };
-      }
-    }
+// Generate scenes
+const story = {};
+for(let i=1;i<=totalScenes;i++){
+  const id='s'+i;
+  if(i===totalScenes || Math.random()<0.12){
+    story[id]={title:`Ending ${i}`,text:endings[Math.floor(Math.random()*endings.length)],choices:[],ending:true};
+  } else {
+    const n1=Math.min(totalScenes,i+(Math.floor(Math.random()*3)+1));
+    const n2=Math.max(1,i+(Math.floor(Math.random()*7)-2));
+    story[id]={
+      title:`Scene ${i}`,
+      text:`You face a challenge in the Grand Line (scene ${i}).`,
+      choices:[{text:`Go to scene ${n1}`,next:'s'+n1},{text:`Go to scene ${n2}`,next:'s'+n2}]
+    };
+  }
+}
 
-    // Helper functions to produce readable choices and text
-    function sceneText(i){
-      const bit = [
-        'You stand at a crossroads near an ancient shrine.',
-        'A merchant offers you a mysterious map for a strange price.',
-        'A storm rolls in — lights flash on the horizon.',
-        'You hear singing from a nearby tavern.',
-        'An old friend finds you with a worried look.'
-      ];
-      return (bit[i % bit.length] || bit[0]) + ` (scene ${i})`;
-    }
-    function choiceText(i,target){
-      const verbs = ['Take the path to','Investigate','Ignore and continue toward','Barter for','Climb up to','Hide behind','Challenge','Follow','Open','Close'];
-      const v = verbs[i % verbs.length];
-      return `${v} ${target==='s'+(i+1) ? 'nearby ruins' : 'scene '+target.replace('s','')}`;
-    }
+// UI logic
+const sceneTitle=document.getElementById('sceneTitle');
+const sceneText=document.getElementById('sceneText');
+const choicesEl=document.getElementById('choices');
+const backBtn=document.getElementById('backBtn');
+const restartBtn=document.getElementById('restartBtn');
+const sceneIndexEl=document.getElementById('sceneIndex');
+const progressBar=document.getElementById('progressBar');
 
-    // If some endings have no choices, make restart available
-    window._ADVENTURE_STORY = { story, totalScenes };
-  })();
+let history=[];
+let current='s1';
 
-  // -------------------- Adventure UI logic --------------------
-  (function(){
-    const storyPack = window._ADVENTURE_STORY.story;
-    const keys = Object.keys(storyPack).sort((a,b)=> +a.slice(1)-+b.slice(1));
-    const total = keys.length;
+function showScene(id){
+  current=id;
+  const node=story[id];
+  sceneTitle.textContent=node.title;
+  sceneText.textContent=node.text;
+  choicesEl.innerHTML='';
+  if(node.ending){
+    const endNote=document.createElement('div');
+    endNote.style.color='#fbbf24';
+    endNote.textContent='✨ The End ✨';
+    choicesEl.appendChild(endNote);
+    const restart=document.createElement('button');
+    restart.className='choice-btn';
+    restart.textContent='Play Again';
+    restart.onclick=()=>{history=[];showScene('s1');};
+    choicesEl.appendChild(restart);
+  }
+  (node.choices||[]).forEach(c=>{
+    const b=document.createElement('button');
+    b.className='choice-btn';
+    b.textContent=c.text;
+    b.onclick=()=>{history.push(c.next); showScene(c.next);};
+    choicesEl.appendChild(b);
+  });
+  sceneIndexEl.textContent=+id.slice(1);
+  progressBar.style.width=Math.round((+id.slice(1)/totalScenes)*100)+'%';
+}
 
-    const sceneTitle = document.getElementById('sceneTitle');
-    const sceneText = document.getElementById('sceneText');
-    const choicesEl = document.getElementById('choices');
-    const backBtn = document.getElementById('backBtn');
-    const restartBtn = document.getElementById('restartBtn');
-    const sceneIndexEl = document.getElementById('sceneIndex');
-    const sceneTotalEl = document.getElementById('sceneTotal');
-    const progressBar = document.getElementById('progressBar');
-
-    sceneTotalEl.textContent = total;
-
-    let history = JSON.parse(localStorage.getItem('adventure_history')||'[]');
-    let current = history.length? history[history.length-1] : 's1';
-
-    function showScene(id){
-      current = id;
-      if(!storyPack[id]) id = 's1';
-      const node = storyPack[id];
-      sceneTitle.textContent = node.title || 'Scene';
-      sceneText.textContent = node.text || '';
-      choicesEl.innerHTML = '';
-      if(node.ending){
-        const endNote = document.createElement('div');
-        endNote.className='small-muted';
-        endNote.textContent = '\u2728 The End \u2728';
-        choicesEl.appendChild(endNote);
-        const restart = document.createElement('button');
-        restart.className='choice-btn';
-        restart.textContent='Play Again';
-        restart.onclick = () => { history=[]; save(); showScene('s1'); }
-        choicesEl.appendChild(restart);
-      }
-
-      (node.choices||[]).forEach(c=>{
-        const b = document.createElement('button');
-        b.className='choice-btn';
-        b.textContent = c.text;
-        b.onclick = ()=>{ history.push(c.next); save(); showScene(c.next); }
-        choicesEl.appendChild(b);
-      });
-
-      // update UI
-      sceneIndexEl.textContent = (+id.slice(1));
-      const pct = Math.round((+id.slice(1)/total)*100);
-      progressBar.style.width = pct + '%';
-
-      // save history
-      if(!history.length || history[history.length-1] !== id) { history.push(id); save(); }
-    }
-
-    function save(){ localStorage.setItem('adventure_history', JSON.stringify(history)); }
-
-    backBtn.onclick = ()=>{
-      if(history.length>1){ history.pop(); const last = history.pop(); showScene(last||'s1'); }
-    }
-    restartBtn.onclick = ()=>{ history=[]; save(); showScene('s1'); }
-
-    // initial show
-    showScene(current || 's1');
-
-    // Expose for debugging
-    window._adventure = { showScene, storyPack };
-  })();
-
-  // -------------------- Tabs --------------------
-  (function(){
-    const tabA = document.getElementById('tabAdventure');
-    const tabH = document.getElementById('tabHacker');
-    const adv = document.getElementById('adventure');
-    const hack = document.getElementById('hacker');
-
-    function showTab(which){
-      if(which==='adv'){
-        tabA.classList.add('active'); tabH.classList.remove('active'); adv.style.display='block'; hack.style.display='none';
-      } else { tabH.classList.add('active'); tabA.classList.remove('active'); adv.style.display='none'; hack.style.display='block'; }
-    }
-    tabA.onclick = ()=> showTab('adv');
-    tabH.onclick = ()=> showTab('hack');
-    // initial
-    showTab('adv');
-  })();
-
-  // -------------------- Fake Hacker Console --------------------
-  (function(){
-    const terminal = document.getElementById('terminal');
-    const input = document.getElementById('hackInput');
-    const btn = document.getElementById('hackBtn');
-
-    function appendLine(text, cls){
-      const div = document.createElement('div');
-      div.className = 'line ' + (cls||'');
-      div.textContent = text;
-      terminal.appendChild(div);
-      terminal.scrollTop = terminal.scrollHeight;
-    }
-
-    function clear(){ terminal.innerHTML=''; }
-
-    function runFake(target){
-      clear();
-      const seq = [];
-      seq.push({t:0, text:`Initializing breach simulation for "${target}"...`});
-      seq.push({t:600, text:`Establishing secure channel... DONE`});
-      seq.push({t:1200, text:`Enumerating services...`});
-      seq.push({t:1800, text:`- authsvc`});
-      seq.push({t:2100, text:`- datastream`});
-      seq.push({t:2400, text:`- logs`});
-      seq.push({t:3000, text:`Bypassing fancy firewall...`});
-      seq.push({t:3800, text:`Injecting chaos packets [████████░░] 80%`});
-      seq.push({t:4600, text:`Extracting secret: FLAG{ONE-PIECE-4EVER}`});
-      seq.push({t:5400, text:`Deploying reverse-shell (visual only)...`});
-      seq.push({t:6200, text:`ACCESS GRANTED — Welcome Captain.`});
-      seq.push({t:7000, text:`Closing simulation. Have a nice raid.`});
-
-      seq.forEach(s=> setTimeout(()=> appendLine(s.text), s.t));
-    }
-
-    function handleRun(){ const t = input.value.trim() || 'StrawHatBank'; runFake(t); }
-
-    btn.onclick = handleRun;
-    input.addEventListener('keydown', e=>{ if(e.key==='Enter') handleRun(); });
-
-    // seed a message
-    appendLine('Fake Hacker Console ready. Type and press Run.');
-  })();
-
-  // -------------------- Small helper: ensure localStorage safe --------------------
-  try{ localStorage.setItem('__test','1'); localStorage.removeItem('__test'); } catch(e){ console.warn('localStorage not available'); }
-  </script>
+backBtn.onclick=()=>{if(history.length>1){history.pop(); showScene(history.pop());}}
+restartBtn.onclick=()=>{history=[];showScene('s1');}
+showScene('s1');
+</script>
 </body>
 </html>
+
+
 
