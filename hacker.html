@@ -1,0 +1,56 @@
+<!-- ==================== Hacker Page (hacker.html) ==================== -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One Piece Hacker</title>
+<style>
+body{margin:0;font-family:Inter, system-ui, sans-serif;background:linear-gradient(180deg,#071029,#071a2a);color:#e6eef8;}
+a{color:#fbbf24;text-decoration:none;}
+.nav{display:flex;gap:12px;padding:16px;background:rgba(0,0,0,0.6);}
+.nav a{padding:8px 14px;background:linear-gradient(90deg,#f59e0b,#fcd34d);border-radius:8px;font-weight:600;transition:0.2s;}
+.nav a:hover{opacity:0.85;}
+.wrap{max-width:980px;margin:24px auto;padding:16px;}
+.card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:18px;box-shadow:0 6px 20px rgba(0,0,0,0.6);}
+.scene-title{font-size:20px;font-weight:700;margin:0 0 8px 0;}
+.scene-text{line-height:1.5;color:#cbd5e1;margin-bottom:12px;}
+.terminal{background:#000;color:#33ff66;padding:16px;border-radius:8px;height:320px;overflow:auto;font-family:monospace;font-size:13px;margin-bottom:12px;}
+.input-row{display:flex;gap:8px;margin-top:12px;}
+.text-input{flex:1;padding:10px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:#07111b;color:#e6eef8;}
+.btn{padding:8px 14px;background:linear-gradient(90deg,#f59e0b,#fcd34d);border:none;border-radius:8px;font-weight:600;cursor:pointer;transition:0.2s;}
+.btn:hover{opacity:0.85;}
+.small-muted{font-size:13px;color:#94a3b8;}
+</style>
+</head>
+<body>
+<div class="nav">
+<a href="index.html">Home</a>
+<a href="adventure.html">Adventure</a>
+<a href="hacker.html">Hacker</a>
+</div>
+<div class="wrap">
+<div class="card">
+<h2 class="scene-title">Fake Hacker Console</h2>
+<div class="scene-text small-muted">Type something and press RUN to simulate hacking.</div>
+<div class="terminal" id="terminal"></div>
+<div class="input-row">
+<input id="hackInput" class="text-input" placeholder="Type target and press RUN" />
+<button id="hackBtn" class="btn">RUN</button>
+</div>
+<div style="margin-top:10px;color:#94a3b8;font-size:13px">Note: This is purely visual & safe for pranks.</div>
+</div>
+</div>
+<script>
+const terminal=document.getElementById('terminal');
+const input=document.getElementById('hackInput');
+const btn=document.getElementById('hackBtn');
+function appendLine(text){const div=document.createElement('div');div.textContent=text;terminal.appendChild(div);terminal.scrollTop=terminal.scrollHeight;}
+function clear(){terminal.innerHTML='';}
+function runFake(target){clear();const seq=[`Initializing breach simulation for "${target}"...`,'Establishing secure channel... DONE','Enumerating services...','- authsvc','- datastream','- logs','Bypassing firewall...','Injecting chaos packets [██████░░] 75%','Extracting secret: FLAG{ONE-PIECE-4EVER}','Deploying reverse-shell (visual only)...','ACCESS GRANTED — Welcome Captain.','Closing simulation. Have a nice raid.'];seq.forEach((text,i)=>setTimeout(()=>appendLine(text),i*600));}
+btn.onclick=()=>{runFake(input.value.trim()||'StrawHatBank');};
+input.addEventListener('keydown',e=>{if(e.key==='Enter') runFake(input.value.trim()||'StrawHatBank');});
+appendLine('Fake Hacker Console ready. Type target and press RUN.');
+</script>
+</body>
+</html>
