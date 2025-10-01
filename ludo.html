@@ -27,8 +27,8 @@
         body {
             margin: 0;
             font-family: Arial, sans-serif;
-            /* Using a high-res, public background image */
-            background: url('https://images7.alphacoders.com/660/660098.png') no-repeat center center fixed;
+            /* USING LOCAL FILE: op-background.jpg */
+            background: url('op-background.jpg') no-repeat center center fixed;
             background-size: cover;
             color: var(--text-light);
             display: flex;
@@ -81,8 +81,8 @@
             margin: 0 auto;
             width: 400px;
             height: 400px;
-            /* Keeping your original Ludo board image path */
-            background: url('https://i.ibb.co/x2Xx6Zm/ludo-board.png') no-repeat center center;
+            /* USING LOCAL FILE: op-ludoboard.png */
+            background: url('op-ludoboard.png') no-repeat center center;
             background-size: contain;
             position: relative;
             border: 5px solid var(--op-gold);
@@ -100,42 +100,34 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
             background-position: center;
             background-repeat: no-repeat;
-            /* Use 'contain' or 'cover' depending on preference */
-            background-size: cover; 
+            background-size: 100%; /* Fit the icon perfectly */
             background-color: rgba(255, 255, 255, 0.2);
         }
 
-        /* FIXED Character Images for Tokens */
-        /* Using reliable, direct links to icons */
+        /* FIXED Character Images using LOCAL FILES */
         .token.red { 
             border-color: var(--op-red); 
-            background-image: url('https://i.ibb.co/3WqP49g/luffy-icon.png'); /* Luffy */
-            background-size: 100%; /* Fit closely */
+            background-image: url('luffy-icon.png');
         }
         .token.blue { 
             border-color: var(--op-blue); 
-            background-image: url('https://i.ibb.co/P48gD8K/zoro-icon.png'); /* Zoro */
-            background-size: 100%;
+            background-image: url('zoro-icon.png');
         }
         .token.green { 
             border-color: var(--op-green); 
-            background-image: url('https://i.ibb.co/tZ5889K/nami-icon.png'); /* Nami */
-            background-size: 100%;
+            background-image: url('nami-icon.png');
         }
         .token.yellow { 
             border-color: var(--op-yellow); 
-            background-image: url('https://i.ibb.co/9TRmS4Z/usopp-icon.png'); /* Usopp */
-            background-size: 100%;
+            background-image: url('usopp-icon.png');
         }
         .token.purple { 
             border-color: var(--op-purple); 
-            background-image: url('https://i.ibb.co/V3x7961/sanji-icon.png'); /* Sanji */
-            background-size: 100%;
+            background-image: url('sanji-icon.png');
         }
         .token.orange { 
             border-color: var(--op-orange); 
-            background-image: url('https://i.ibb.co/F820J7x/chopper-icon.png'); /* Chopper */
-            background-size: 100%;
+            background-image: url('chopper-icon.png');
         }
 
 
