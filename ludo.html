@@ -1,435 +1,339 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>One Piece Ludo — Step 1 (Board & Homes)</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One Piece Ludo – Full Version</title>
 <style>
-  :root{
-    --gold: #f6b93b;
-    --card: rgba(0,0,0,0.45);
-    --muted: #b5c6d8;
-  }
-  html,body{height:100%;margin:0;font-family:Inter, system-ui, Arial,sans-serif;background:#071229;color:var(--gold);}
-  .wrap{max-width:1100px;margin:10px auto;padding:12px;box-sizing:border-box;}
-  header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-  h1{margin:0;font-size:20px;text-shadow:1px 1px #000;}
-  .top-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  .card{background:var(--card);padding:10px;border-radius:10px;border:1px solid rgba(255,215,0,0.08);box-shadow:0 6px 20px rgba(0,0,0,0.6)}
-  label{color:var(--muted);margin-right:6px;font-size:13px}
-  select,input[type=checkbox]{margin-right:8px}
-  button{background:linear-gradient(90deg,#f59e0b,#fcd34d);border:0;padding:8px 12px;border-radius:8px;font-weight:700;cursor:pointer}
-  #stage{display:flex;gap:12px;margin-top:12px;align-items:flex-start;flex-wrap:wrap}
-  #boardWrap{flex:1;min-width:300px;display:flex;justify-content:center;align-items:center}
-  canvas{border-radius:8px;border:2px solid rgba(255,215,0,0.06);background:linear-gradient(180deg, rgba(0,0,0,0.24), rgba(0,0,0,0.18));max-width:95vw;height:auto;touch-action:none}
-  #sidebar{width:300px;min-width:230px;max-width:340px;display:flex;flex-direction:column;gap:8px}
-  .hint{font-size:13px;color:var(--muted)}
-  .playersList{display:flex;flex-direction:column;gap:6px}
-  .playerRow{display:flex;align-items:center;gap:8px;justify-content:space-between}
-  .colorBox{width:18px;height:18px;border-radius:4px;display:inline-block;margin-right:8px}
-  footer{margin-top:10px;color:var(--muted);font-size:13px}
-  @media(max-width:900px){#stage{flex-direction:column;align-items:center} #sidebar{width:95%}}
+body {
+  margin:0;
+  font-family:Arial;
+  text-align:center;
+  background:url('one-piece-bg.jpg') center/cover no-repeat;
+  color:gold;
+}
+#gameCanvas {
+  background:white;
+  margin:20px auto;
+  display:block;
+  border:5px solid gold;
+  max-width:95vw;
+  height:auto;
+}
+button {
+  margin:10px;
+  padding:10px 20px;
+  font-size:20px;
+  border:2px solid gold;
+  border-radius:8px;
+  background:rgba(0,0,0,0.6);
+  color:gold;
+  cursor:pointer;
+}
+#diceResult {
+  font-size:24px;
+  font-weight:bold;
+  margin-top:10px;
+}
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1>🎴 One Piece Ludo — Board & Homes (Step 1)</h1>
-      <div class="top-controls card">
-        <label for="playerCount">Players</label>
-        <select id="playerCount"><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option></select>
-        <button id="setupBtn">Setup Game</button>
-      </div>
-    </header>
+<h1>🎲 One Piece Ludo – Full Version</h1>
+<canvas id="gameCanvas" width="600" height="600"></canvas><br>
+<button onclick="rollDice()" id="rollBtn">Roll Dice</button>
+<div id="diceResult">Dice: -</div>
 
-    <div id="stage">
-      <div id="boardWrap" class="card" aria-label="Ludo board area">
-        <canvas id="boardCanvas" width="880" height="820" role="img" aria-label="Ludo board"></canvas>
-      </div>
-
-      <aside id="sidebar" class="card" aria-hidden="false">
-        <div>
-          <div class="hint">Choose how many players will play (2-4). Toggle CPU for a player after setup.</div>
-        </div>
-
-        <div class="playersList" id="playersList">
-          <!-- populated dynamically -->
-        </div>
-
-        <div>
-          <button id="toggleGrid">Toggle Grid Guides</button>
-          <div style="height:8px"></div>
-          <button id="exportBtn">Export Board Image</button>
-        </div>
-
-        <div class="hint">This step renders the board visually and places 4 pawns in each player's home. Next steps will add dice, movement & rules.</div>
-      </aside>
-    </div>
-
-    <footer class="card">
-      <div>Next: Step 2 will add pawn movement, dice, and rules (6 to start, capture, home stretch). Reply "next" to continue.</div>
-    </footer>
-  </div>
+<audio id="rollSound" src="https://www.fesliyanstudios.com/play-mp3/387" preload="auto"></audio>
+<audio id="moveSound" src="https://www.fesliyanstudios.com/play-mp3/6539" preload="auto"></audio>
+<audio id="captureSound" src="https://www.fesliyanstudios.com/play-mp3/6376" preload="auto"></audio>
+<audio id="finishSound" src="https://www.fesliyanstudios.com/play-mp3/6905" preload="auto"></audio>
 
 <script>
-/*
-  Step 1: visualize Ludo board + homes + pawns
-  - Responsive canvas with high-DPI support
-  - Grid mapping for 52 path positions + 6-step home paths for each player
-  - Four home areas (4 pawns each) positioned in corners
-  - Simple UI to set player count and show players (CPU toggles will be available in next step)
-*/
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+const boardSize = 600;
+const cell = boardSize / 15;
 
-// Canvas setup
-const canvas = document.getElementById('boardCanvas');
-const ctx = canvas.getContext('2d');
+// Load sounds
+const rollSound = document.getElementById("rollSound");
+const moveSound = document.getElementById("moveSound");
+const captureSound = document.getElementById("captureSound");
+const finishSound = document.getElementById("finishSound");
 
-let DPR = window.devicePixelRatio || 1;
-function fixCanvasResolution(){
-  DPR = window.devicePixelRatio || 1;
-  // keep logical pixel size while scaling for DPI
-  const cssW = canvas.clientWidth || 880;
-  const cssH = canvas.clientHeight || 820;
-  canvas.width = Math.max(600, Math.floor(cssW * DPR));
-  canvas.height = Math.max(520, Math.floor(cssH * DPR));
-  canvas.style.width = cssW + 'px';
-  canvas.style.height = cssH + 'px';
-  ctx.setTransform(DPR,0,0,DPR,0,0);
-}
-fixCanvasResolution();
-window.addEventListener('resize', ()=> { fixCanvasResolution(); buildCoords(); drawAll(); });
+// Safe zones
+const safeZones = [
+  [1,6],[2,8],[6,1],[8,2],[13,6],[12,8],[6,13],[8,12]
+];
 
-// Board geometry containers
-let W = canvas.width / DPR;
-let H = canvas.height / DPR;
-let coords = [];        // coords for path 0..51
-let homePaths = {};     // homePaths[playerIndex] = array[1..6] coords
-let homeCornerCenters = []; // positions to place home boxes
-
-// Build coordinates in a flexible grid (15x15 logical grid adapted to canvas size)
-function buildCoords(){
-  W = canvas.width / DPR;
-  H = canvas.height / DPR;
-
-  // central margin and cell size
-  const margin = Math.min(W,H) * 0.04;
-  const gridSize = Math.min((W - margin*2)/11, (H - margin*2)/11);
-  const ox = (W - gridSize*11)/2;
-  const oy = (H - gridSize*11)/2;
-
-  // helper: grid cell center
-  const grid = (r,c) => ({x: Math.round(ox + c*gridSize + gridSize/2), y: Math.round(oy + r*gridSize + gridSize/2)});
-
-  // The path layout is similar to many Ludo implementations.
-  // We'll define r,c values for the 52 positions around the central cross.
-  const pathRC = [
-    [6,0],[6,1],[6,2],[6,3],[6,4],[6,5],[6,6],        // 0..6 (left -> center)
-    [5,6],[4,6],[3,6],[2,6],[1,6],[0,6],             // 7..12 up
-    [0,7],[0,8],[1,8],[2,8],[3,8],[4,8],[5,8],[6,8], //13..20 across right top to center
-    [6,9],[6,10],[6,11],[6,12],[6,13],               //21..25 right side
-    [7,13],[8,13],[8,12],[8,11],[8,10],[8,9],[8,8],  //26..32 down to center-right
-    [9,8],[10,8],[11,8],[12,8],[13,8],               //33..37 bottom-right
-    [13,7],[13,6],[12,6],[11,6],[10,6],[9,6],[8,6],  //38..44 back to center-left
-    [8,5],[8,4],[8,3],[8,2],[8,1],[8,0],             //45..50 left-bottom
-    [7,0]                                            //51
-  ];
-
-  coords = pathRC.map(rc => grid(rc[0], rc[1]));
-
-  // build home paths for each player (6 steps) visually towards center
-  homePaths = {};
-  homePaths[0] = [ grid(6,1), grid(6,2), grid(6,3), grid(6,4), grid(6,5), grid(6,6) ]; // RED (left -> center)
-  homePaths[1] = [ grid(1,6), grid(2,6), grid(3,6), grid(4,6), grid(5,6), grid(6,6) ]; // GREEN (top -> center)
-  homePaths[2] = [ grid(6,11), grid(6,10), grid(6,9), grid(6,8), grid(6,7), grid(6,6) ]; // YELLOW (right->center)
-  homePaths[3] = [ grid(11,6), grid(10,6), grid(9,6), grid(8,6), grid(7,6), grid(6,6) ]; // BLUE (bottom->center)
-
-  // home corner centers to place 2x2 pawns in the home box (visual)
-  homeCornerCenters = [
-    {x: grid(6, -1).x || (ox - gridSize/2), y: grid(6, -1).y || (oy + 5*gridSize)}, // left area (we'll compute more reliably)
-  ];
-
-  // compute corner centers directly using positions near corners
-  const leftCenter = grid(6, -1); // might be off-grid — fallback compute
-  homeCornerCenters = [
-    // red home (left block) -> use center left of leftmost path positions
-    { x: grid(4,0).x - gridSize*1.2, y: grid(4,0).y },
-    // green (top)
-    { x: grid(0,4).x, y: grid(0,4).y - gridSize*1.2 },
-    // yellow (right)
-    { x: grid(4,10).x + gridSize*1.2, y: grid(4,10).y },
-    // blue (bottom)
-    { x: grid(10,4).x, y: grid(10,4).y + gridSize*1.2 }
-  ];
-
-  // small adaptation: if any coords missing fallback to center
-  const center = grid(6,6);
-  for(let i=0;i<52;i++) if(!coords[i]) coords[i]= {x:center.x,y:center.y};
-
-  W = canvas.width / DPR; H = canvas.height / DPR;
-}
-buildCoords();
-
-/* ==== Game visual state for Step 1 ====
-  players[] with 4 pawns each - pawns stored as -1 (home) now.
-  no movement logic yet.
-*/
-let playerCount = 4;
-const colors = ['red','green','yellow','blue'];
-let players = []; // will be array of {color,isCPU,pawns: [-1,-1,-1,-1]}
-function initPlayers(count){
-  playerCount = count;
-  players = [];
-  for(let i=0;i<count;i++){
-    players.push({
-      color: colors[i],
-      isCPU: false,
-      pawns: [-1,-1,-1,-1],
-      finished: 0
-    });
+// Pawn class
+class Pawn {
+  constructor(color, homeX, homeY, path, img=null) {
+    this.color = color;
+    this.homeX = homeX;
+    this.homeY = homeY;
+    this.path = path;
+    this.pos = -1;
+    this.finished = false;
+    this.img = img;
   }
-  renderPlayersList();
-  drawAll();
-}
-initPlayers(4);
-
-/* draw functions */
-function clearScreen(){
-  ctx.clearRect(0,0,W,H);
-  // base bg
-  ctx.fillStyle = 'rgba(0,0,0,0.36)';
-  ctx.fillRect(0,0,W,H);
-}
-
-function drawPathDots(){
-  for(let i=0;i<52;i++){
-    const c = coords[i];
-    // draw faint circle to indicate square
+  draw() {
+    let px, py;
+    if(this.pos === -1){
+      px = this.homeX;
+      py = this.homeY;
+    } else {
+      let [cx,cy] = this.path[this.pos];
+      px = cx*cell + cell/2;
+      py = cy*cell + cell/2;
+    }
     ctx.beginPath();
-    ctx.fillStyle = 'rgba(255,255,255,0.02)';
-    ctx.arc(c.x, c.y, markerRadius(), 0, Math.PI*2);
-    ctx.fill();
-    // draw index small
-    ctx.fillStyle = 'rgba(255,255,255,0.06)';
-    ctx.font = `${Math.max(9, markerRadius()*0.6)}px Arial`;
-    ctx.textAlign='center'; ctx.textBaseline='middle';
-    // optional: show index for dev (comment out to hide)
-    // ctx.fillText(i, c.x, c.y);
+    if(this.img){
+      ctx.drawImage(this.img, px-cell/3, py-cell/3, cell*2/3, cell*2/3);
+    } else {
+      ctx.fillStyle = this.color;
+      ctx.arc(px, py, cell/3, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = "black";
+      ctx.stroke();
+    }
   }
 }
 
-function markerRadius(){ return Math.max(10, Math.min(W,H)/30); }
-
-function drawHomeAreas(){
-  // draw 4 big corner home boxes
-  const boxSize = Math.min(W,H) * 0.32;
-  const pad = Math.min(W,H) * 0.04;
-  // red (left)
-  const redBox = {x: pad, y: (H-boxSize)/2, w: boxSize, h: boxSize};
-  drawHomeBox(redBox, 'red');
-
-  // green (top)
-  const greenBox = {x: (W-boxSize)/2, y: pad, w: boxSize, h: boxSize};
-  drawHomeBox(greenBox, 'green');
-
-  // yellow (right)
-  const yellowBox = {x: W - pad - boxSize, y: (H-boxSize)/2, w: boxSize, h: boxSize};
-  drawHomeBox(yellowBox, 'yellow');
-
-  // blue (bottom)
-  const blueBox = {x: (W-boxSize)/2, y: H - pad - boxSize, w: boxSize, h: boxSize};
-  drawHomeBox(blueBox, 'blue');
-
-  // draw internal 2x2 pawn slots for each home
-  drawHomePawnsSlots();
+// Path creation
+function makePaths(){
+  let redPath = [];
+  for(let i=0;i<6;i++) redPath.push([i,6]);       
+  for(let i=0;i<6;i++) redPath.push([6,i]);       
+  for(let i=6;i<15;i++) redPath.push([i,0]);      
+  for(let i=1;i<6;i++) redPath.push([14,i]);      
+  for(let i=14;i>=9;i--) redPath.push([i,6]);     
+  for(let i=7;i<15;i++) redPath.push([8,i]);      
+  for(let i=13;i>=0;i--) redPath.push([i,14]);    
+  for(let i=13;i>=9;i--) redPath.push([0,i]);     
+  for(let i=1;i<6;i++) redPath.push([i,8]);       
+  for(let i=7;i<15;i++) redPath.push([6,i]);      
+  for(let i=1;i<=5;i++) redPath.push([7,i]);      
+  return redPath;
 }
+let paths = {
+  red: makePaths(),
+  blue: [],
+  green: [],
+  yellow: []
+};
+paths.blue = [...paths.red.slice(13), ...paths.red.slice(0,13)];
+paths.green = [...paths.red.slice(26), ...paths.red.slice(0,26)];
+paths.yellow = [...paths.red.slice(39), ...paths.red.slice(0,39)];
 
-function drawHomeBox(box, color){
-  ctx.save();
-  ctx.fillStyle = color;
-  ctx.globalAlpha = 0.08;
-  ctx.fillRect(box.x, box.y, box.w, box.h);
-  ctx.globalAlpha = 1;
-  ctx.strokeStyle = 'rgba(255,215,0,0.06)';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(box.x, box.y, box.w, box.h);
-
-  // big emblem (devil-fruit styled circle)
-  ctx.beginPath();
-  ctx.fillStyle = color;
-  ctx.globalAlpha = 0.06;
-  ctx.arc(box.x + box.w/2, box.y + box.h/2, Math.min(box.w,box.h)/4, 0, Math.PI*2);
-  ctx.fill();
-  ctx.globalAlpha = 1;
-  ctx.restore();
-}
-
-function drawHomePawnsSlots(){
-  // For each player, compute 2x2 positions inside their home box to render pawn placeholders
-  const boxSize = Math.min(W,H) * 0.32;
-  const pad = Math.min(W,H) * 0.04;
-  const gap = Math.min(W,H) * 0.02;
-  // red home (left)
-  const bases = [
-    {cx: pad + boxSize*0.33, cy: (H-boxSize)/2 + boxSize*0.33},
-    {cx: pad + boxSize*0.66, cy: (H-boxSize)/2 + boxSize*0.33},
-    {cx: pad + boxSize*0.33, cy: (H-boxSize)/2 + boxSize*0.66},
-    {cx: pad + boxSize*0.66, cy: (H-boxSize)/2 + boxSize*0.66}
+// Setup pawns
+let pawns = { red: [], blue: [], green: [], yellow: [] };
+function initPawns(){
+  pawns.red = [
+    new Pawn("red", cell*2, cell*2, paths.red),
+    new Pawn("red", cell*4, cell*2, paths.red),
+    new Pawn("red", cell*2, cell*4, paths.red),
+    new Pawn("red", cell*4, cell*4, paths.red)
   ];
-  drawPawnsForPlayerAt(0, bases);
-
-  // green (top)
-  const gbases = [
-    {cx: (W-boxSize)/2 + boxSize*0.33, cy: pad + boxSize*0.33},
-    {cx: (W-boxSize)/2 + boxSize*0.66, cy: pad + boxSize*0.33},
-    {cx: (W-boxSize)/2 + boxSize*0.33, cy: pad + boxSize*0.66},
-    {cx: (W-boxSize)/2 + boxSize*0.66, cy: pad + boxSize*0.66}
+  pawns.blue = [
+    new Pawn("blue", cell*11, cell*2, paths.blue),
+    new Pawn("blue", cell*13, cell*2, paths.blue),
+    new Pawn("blue", cell*11, cell*4, paths.blue),
+    new Pawn("blue", cell*13, cell*4, paths.blue)
   ];
-  drawPawnsForPlayerAt(1, gbases);
-
-  // yellow (right)
-  const yboxX = W - pad - boxSize;
-  const ybases = [
-    {cx: yboxX + boxSize*0.33, cy: (H-boxSize)/2 + boxSize*0.33},
-    {cx: yboxX + boxSize*0.66, cy: (H-boxSize)/2 + boxSize*0.33},
-    {cx: yboxX + boxSize*0.33, cy: (H-boxSize)/2 + boxSize*0.66},
-    {cx: yboxX + boxSize*0.66, cy: (H-boxSize)/2 + boxSize*0.66}
+  pawns.green = [
+    new Pawn("green", cell*2, cell*11, paths.green),
+    new Pawn("green", cell*4, cell*11, paths.green),
+    new Pawn("green", cell*2, cell*13, paths.green),
+    new Pawn("green", cell*4, cell*13, paths.green)
   ];
-  drawPawnsForPlayerAt(2, ybases);
-
-  // blue (bottom)
-  const bboxY = H - pad - boxSize;
-  const bbases = [
-    {cx: (W-boxSize)/2 + boxSize*0.33, cy: bboxY + boxSize*0.33},
-    {cx: (W-boxSize)/2 + boxSize*0.66, cy: bboxY + boxSize*0.33},
-    {cx: (W-boxSize)/2 + boxSize*0.33, cy: bboxY + boxSize*0.66},
-    {cx: (W-boxSize)/2 + boxSize*0.66, cy: bboxY + boxSize*0.66}
+  pawns.yellow = [
+    new Pawn("yellow", cell*11, cell*11, paths.yellow),
+    new Pawn("yellow", cell*13, cell*11, paths.yellow),
+    new Pawn("yellow", cell*11, cell*13, paths.yellow),
+    new Pawn("yellow", cell*13, cell*13, paths.yellow)
   ];
-  drawPawnsForPlayerAt(3, bbases);
+}
+initPawns();
+
+// Game variables
+let diceValue = 0;
+let rolling = false;
+let turnOrder = ["red","blue","green","yellow"];
+let currentPlayer = 0;
+let turnTimer = 45; // 45 seconds per turn
+let timerInterval;
+
+// Dice roll animation
+function rollDice(){
+  if(rolling) return;
+  rolling=true;
+  rollSound.play();
+  let counter=0;
+  let interval=setInterval(()=>{
+    diceValue=Math.floor(Math.random()*6)+1;
+    document.getElementById("diceResult").innerText="Rolling... "+diceValue;
+    counter++;
+    if(counter>10){
+      clearInterval(interval);
+      document.getElementById("diceResult").innerText="Dice: "+diceValue+" 🎲 ("+turnOrder[currentPlayer].toUpperCase()+")";
+      rolling=false;
+      startTimer();
+    }
+  },100);
 }
 
-function drawPawnsForPlayerAt(playerIndex, bases){
-  const size = Math.max(12, markerRadius()*0.9);
-  const p = players[playerIndex];
-  for(let i=0;i<4;i++){
-    const b = bases[i];
-    // draw pawn circle
-    ctx.beginPath();
-    ctx.fillStyle = p ? p.color : colors[playerIndex];
-    ctx.arc(b.cx, b.cy, size, 0, Math.PI*2);
-    ctx.fill();
-    // small black stroke
-    ctx.strokeStyle = 'rgba(0,0,0,0.7)';
-    ctx.stroke();
-    // pawn number
-    ctx.fillStyle = '#000';
-    ctx.font = `${Math.max(9, size*0.6)}px sans-serif`;
-    ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText(i+1, b.cx, b.cy);
-  }
+// Start 45s timer
+function startTimer(){
+  clearInterval(timerInterval);
+  let timeLeft=turnTimer;
+  timerInterval=setInterval(()=>{
+    document.getElementById("diceResult").innerText+=" | "+timeLeft+"s left";
+    timeLeft--;
+    if(timeLeft<0){
+      clearInterval(timerInterval);
+      document.getElementById("diceResult").innerText="Turn skipped! Next player.";
+      nextTurn();
+    }
+  },1000);
 }
 
-function drawCenterCross(){
-  // aesthetic cross in center where homePaths meet
-  const center = homePaths[0] ? homePaths[0][homePaths[0].length-1] : {x: W/2, y: H/2};
-  ctx.save();
-  ctx.beginPath();
-  ctx.fillStyle = 'rgba(255,215,0,0.04)';
-  ctx.arc(center.x, center.y, markerRadius()*3, 0, Math.PI*2);
-  ctx.fill();
-  ctx.restore();
-}
+// Click pawn to move
+canvas.addEventListener("click",(e)=>{
+  if(rolling || diceValue===0) return;
+  clearInterval(timerInterval);
+  let rect = canvas.getBoundingClientRect();
+  let mx = e.clientX - rect.left;
+  let my = e.clientY - rect.top;
+  let player = turnOrder[currentPlayer];
 
-/* master draw function */
-let showGridGuides = false;
-function drawAll(){
-  clearScreen();
-  if(showGridGuides) drawGuides();
-  drawHomeAreas();
-  drawPathDots();
-  drawCenterCross();
-  // draw home pawns only for active players (others appear faint)
-  for(let i=0;i<playerCount;i++){
-    // draw home pawns for players[i] (players array may have less than 4 configured)
-    // ensure players array length
-    if(!players[i]) continue;
-    // For step1 we render pawns in home positions only, handled inside drawHomePawnsSlots -> drawPawnsForPlayerAt
-  }
-}
-
-/* optional grid guides for debugging */
-function drawGuides(){
-  ctx.save();
-  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
-  ctx.lineWidth = 1;
-  // draw coords indices for path
-  for(let i=0;i<coords.length;i++){
-    const c = coords[i];
-    ctx.beginPath();
-    ctx.fillStyle = 'rgba(180,180,180,0.06)';
-    ctx.arc(c.x, c.y, 8, 0, Math.PI*2);
-    ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,0.06)';
-    ctx.font = '10px monospace';
-    ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText(String(i), c.x, c.y-12);
-  }
-  ctx.restore();
-}
-
-/* UI: players list rendering & CPU toggles (CPU toggles no-op for step1) */
-const playersListEl = document.getElementById('playersList');
-function renderPlayersList(){
-  playersListEl.innerHTML = '';
-  for(let i=0;i<playerCount;i++){
-    const p = players[i] || { color: colors[i], isCPU:false, pawns: [-1,-1,-1,-1] };
-    // ensure players array has entries for demonstration
-    if(!players[i]) players[i] = p;
-    const row = document.createElement('div');
-    row.className = 'playerRow';
-    const left = document.createElement('div');
-    const colorBox = document.createElement('span'); colorBox.className='colorBox';
-    colorBox.style.background = p.color;
-    left.appendChild(colorBox);
-    left.appendChild(document.createTextNode(p.color.toUpperCase()));
-    const right = document.createElement('div');
-    const cpuCheckbox = document.createElement('input');
-    cpuCheckbox.type='checkbox';
-    cpuCheckbox.checked = p.isCPU || false;
-    cpuCheckbox.addEventListener('change', ()=> { players[i].isCPU = cpuCheckbox.checked; });
-    right.appendChild(cpuCheckbox);
-    right.appendChild(document.createTextNode(' CPU'));
-    row.appendChild(left); row.appendChild(right);
-    playersListEl.appendChild(row);
-  }
-}
-
-/* Setup button wiring */
-document.getElementById('setupBtn').addEventListener('click', ()=>{
-  const cnt = parseInt(document.getElementById('playerCount').value,10);
-  initPlayers(cnt);
+  pawns[player].forEach(pawn=>{
+    let [cx,cy] = (pawn.pos>=0 ? pawn.path[pawn.pos] : [pawn.homeX/cell,pawn.homeY/cell]);
+    let px = cx*cell+cell/2, py = cy*cell+cell/2;
+    if(Math.sqrt((mx-px)**2+(my-py)**2) < cell/2){
+      movePawn(pawn,player);
+    }
+  });
 });
 
-/* Toggle grid guides */
-document.getElementById('toggleGrid').addEventListener('click', ()=>{
-  showGridGuides = !showGridGuides;
-  drawAll();
-});
+// Move pawn
+function movePawn(pawn,player){
+  if(pawn.finished) return;
+  if(pawn.pos===-1 && diceValue===6){
+    pawn.pos=0;
+    moveSound.play();
+  } else if(pawn.pos>=0){
+    let newPos = pawn.pos + diceValue;
+    if(newPos < pawn.path.length){
+      pawn.pos=newPos;
+      moveSound.play();
+      captureCheck(pawn,player);
+      if(pawn.pos===pawn.path.length-1){
+        pawn.finished=true;
+        finishSound.play();
+      }
+    }
+  }
 
-/* Export canvas as image */
-document.getElementById('exportBtn').addEventListener('click', ()=>{
-  const data = canvas.toDataURL('image/png');
-  const link = document.createElement('a');
-  link.href = data;
-  link.download = 'ludo-board.png';
-  link.click();
-});
+  if(pawns[player].every(p=>p.finished)){
+    alert(player.toUpperCase()+" WINS the game! 🏆");
+    resetGame();
+    return;
+  }
 
-/* initial paint */
-drawAll();
-renderPlayersList();
+  if(diceValue!==6) nextTurn();
+  diceValue=0;
+}
 
+// Capture
+function captureCheck(pawn,player){
+  let [cx,cy] = pawn.path[pawn.pos];
+  for(let color in pawns){
+    if(color!==player){
+      pawns[color].forEach(other=>{
+        if(other.pos>=0 && !other.finished){
+          let [ox,oy] = other.path[other.pos];
+          if(cx===ox && cy===oy && !isSafe(cx,cy)){
+            other.pos=-1;
+            captureSound.play();
+          }
+        }
+      });
+    }
+  }
+}
+
+function isSafe(x,y){
+  return safeZones.some(z=>z[0]===x && z[1]===y);
+}
+
+// Next turn (AI moves if bot)
+function nextTurn(){
+  currentPlayer=(currentPlayer+1)%4;
+  diceValue=0;
+  if(turnOrder[currentPlayer]==="blue"){ // Example AI for Blue
+    setTimeout(()=>aiMove("blue"),500);
+  } else {
+    startTimer();
+  }
+}
+
+// Simple AI
+function aiMove(player){
+  rollDice();
+  setTimeout(()=>{
+    let movable = pawns[player].filter(p=>p.pos!==-1 || diceValue===6 && !p.finished);
+    if(movable.length>0){
+      let pawn = movable[Math.floor(Math.random()*movable.length)];
+      movePawn(pawn,player);
+    } else {
+      nextTurn();
+    }
+  },1500);
+}
+
+// Reset
+function resetGame(){
+  initPawns();
+  currentPlayer=0;
+  diceValue=0;
+}
+
+// Draw
+function drawBoard(){
+  ctx.clearRect(0,0,boardSize,boardSize);
+
+  // Grid
+  ctx.strokeStyle="black";
+  for(let i=0;i<15;i++){
+    for(let j=0;j<15;j++){
+      ctx.strokeRect(i*cell,j*cell,cell,cell);
+    }
+  }
+
+  // Safe zones
+  safeZones.forEach(([x,y])=>{
+    ctx.fillStyle="lightgreen";
+    ctx.fillRect(x*cell,y*cell,cell,cell);
+  });
+
+  // Highlight turn
+  ctx.fillStyle="rgba(255,215,0,0.3)";
+  ctx.fillRect(0,0,boardSize,cell);
+  ctx.font="20px Arial";
+  ctx.fillStyle="black";
+  ctx.fillText("Current Turn: "+turnOrder[currentPlayer].toUpperCase(),10,20);
+
+  // Pawns
+  for(let color in pawns){
+    pawns[color].forEach(p=>p.draw());
+  }
+
+  requestAnimationFrame(drawBoard);
+}
+drawBoard();
 </script>
 </body>
 </html>
+
 
 
