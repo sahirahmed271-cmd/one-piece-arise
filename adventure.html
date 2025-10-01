@@ -1,57 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>One Piece Adventure</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>One Piece — Adventure</title>
 <style>
-  /* ====== Theme same as https://one-piece-arise.pages.dev/ ====== */
-  body{margin:0;font-family:Inter, system-ui, sans-serif;background:linear-gradient(180deg,#071029,#071a2a);color:#e6eef8;}
-  a{color:#fbbf24;text-decoration:none;}
-  .nav{display:flex;gap:12px;padding:16px;background:rgba(0,0,0,0.6);}
-  .nav a{padding:8px 14px;background:linear-gradient(90deg,#f59e0b,#fcd34d);border-radius:8px;font-weight:600;transition:0.2s;}
-  .nav a:hover{opacity:0.85;}
-  .wrap{max-width:980px;margin:24px auto;padding:16px;}
-  .card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:18px;box-shadow:0 6px 20px rgba(0,0,0,0.6);}
-  .scene-title{font-size:20px;font-weight:700;margin:0 0 8px 0;}
-  .scene-text{line-height:1.5;color:#cbd5e1;margin-bottom:12px;}
+  /* Theme matching your site */
+  body{margin:0;font-family:Inter, system-ui, Arial,sans-serif;background:linear-gradient(180deg,#071029,#071a2a);color:#e6eef8;}
+  .nav{display:flex;gap:12px;padding:14px;background:rgba(0,0,0,0.55);}
+  .nav a{padding:8px 12px;background:linear-gradient(90deg,#f59e0b,#fcd34d);border-radius:8px;color:#000;font-weight:700;text-decoration:none;}
+  .wrap{max-width:980px;margin:28px auto;padding:18px;}
+  .card{background:rgba(255,255,255,0.03);border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.06);box-shadow:0 8px 30px rgba(0,0,0,0.6);}
+  .scene-title{font-size:20px;margin:0 0 8px 0;font-weight:800;color:#fbbf24;}
+  .scene-text{color:#cbd5e1;line-height:1.5;margin-bottom:12px;}
   .choices{display:flex;flex-direction:column;gap:10px;margin-bottom:12px;}
-  .choice-btn{background:linear-gradient(90deg,#f59e0b,#fcd34d);border:none;padding:10px 14px;border-radius:8px;font-weight:600;color:#000;cursor:pointer;transition:0.2s;}
-  .choice-btn:hover{opacity:0.85;transform:translateY(-1px);}
-  .controls{display:flex;gap:8px;align-items:center;margin-top:12px;}
-  .secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:#cbd5e1;cursor:pointer;padding:6px 10px;border-radius:6px;}
-  .progress{height:8px;background:#073045;border-radius:10px;overflow:hidden;margin-top:8px;}
+  .choice-btn{background:linear-gradient(90deg,#f59e0b,#fcd34d);border:0;padding:10px 14px;border-radius:8px;font-weight:700;color:#000;cursor:pointer;transition:all .14s;}
+  .choice-btn:hover{transform:translateY(-3px);opacity:.95;}
+  .controls{display:flex;align-items:center;gap:8px;margin-top:12px;}
+  .secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 10px;border-radius:8px;color:#cbd5e1;cursor:pointer;}
+  .secondary:disabled{opacity:.45;cursor:default;}
+  .progress{height:8px;background:#073045;border-radius:10px;overflow:hidden;margin-top:12px;}
   .progress > i{display:block;height:100%;background:linear-gradient(90deg,#f59e0b,#fcd34d);width:0%;}
+  .meta{margin-left:auto;color:#94a3b8;font-size:13px;}
+  @media(max-width:540px){.wrap{padding:12px}.choice-btn{font-size:15px}}
 </style>
 </head>
 <body>
-
-<!-- NAV -->
-<div class="nav">
-  <a href="index.html">Home</a>
-  <a href="adventure.html">Adventure</a>
-  <a href="hacker.html">Hacker</a>
-</div>
-
-<div class="wrap">
-  <div class="card">
-    <h2 class="scene-title" id="sceneTitle">Scene</h2>
-    <div class="scene-text" id="sceneText"></div>
-    <div class="choices" id="choices"></div>
-    <div class="controls">
-      <button class="secondary" id="backBtn">⬅ Back</button>
-      <button class="secondary" id="restartBtn">⟳ Restart</button>
-      <div style="flex:1"></div>
-      <div style="color:#94a3b8; font-size:13px">Scene <span id="sceneIndex">0</span> / <span id="sceneTotal">50</span></div>
-    </div>
-    <div class="progress"><i id="progressBar"></i></div>
+  <div class="nav">
+    <a href="index.html">Home</a>
+    <a href="adventure.html">Adventure</a>
+    <a href="hacker.html">Hacker</a>
   </div>
-</div>
+
+  <div class="wrap">
+    <div class="card">
+      <h2 class="scene-title" id="sceneTitle">Scene</h2>
+      <div class="scene-text" id="sceneText"></div>
+
+      <div class="choices" id="choices"></div>
+
+      <div class="controls">
+        <button id="backBtn" class="secondary" disabled>⬅ Back</button>
+        <button id="restartBtn" class="secondary">⟳ Restart</button>
+        <div class="meta">Scene <span id="sceneIndex">0</span> / <span id="sceneTotal">50</span></div>
+      </div>
+
+      <div class="progress"><i id="progressBar"></i></div>
+    </div>
+  </div>
 
 <script>
-// Adventure JS
-const totalScenes = 50;
-const endings = [
+/* ===== Adventure data generation ===== */
+const TOTAL_SCENES = 50;
+const ENDINGS = [
   "You found a secret treasure and retired as a legend.",
   "You fell into a trap and learned an important lesson.",
   "You became the captain of a new crew and sailed away.",
@@ -59,69 +60,127 @@ const endings = [
   "You sacrificed yourself to save a friend and were remembered."
 ];
 
-// Generate scenes
 const story = {};
-for(let i=1;i<=totalScenes;i++){
-  const id='s'+i;
-  if(i===totalScenes || Math.random()<0.12){
-    story[id]={title:`Ending ${i}`,text:endings[Math.floor(Math.random()*endings.length)],choices:[],ending:true};
+for (let i = 1; i <= TOTAL_SCENES; i++) {
+  const id = 's' + i;
+  // sprinkle endings and final is forced ending
+  if (i === TOTAL_SCENES || Math.random() < 0.12) {
+    story[id] = { title: `Ending ${i}`, text: ENDINGS[Math.floor(Math.random() * ENDINGS.length)], choices: [], ending: true };
   } else {
-    const n1=Math.min(totalScenes,i+(Math.floor(Math.random()*3)+1));
-    const n2=Math.max(1,i+(Math.floor(Math.random()*7)-2));
-    story[id]={
-      title:`Scene ${i}`,
-      text:`You face a challenge in the Grand Line (scene ${i}).`,
-      choices:[{text:`Go to scene ${n1}`,next:'s'+n1},{text:`Go to scene ${n2}`,next:'s'+n2}]
+    const n1 = Math.min(TOTAL_SCENES, i + (Math.floor(Math.random() * 3) + 1));
+    const n2 = Math.max(1, i + (Math.floor(Math.random() * 7) - 2));
+    story[id] = {
+      title: `Scene ${i}`,
+      text: `You encounter a challenge on the Grand Line. (scene ${i})`,
+      choices: [
+        { text: `Take the risky route → scene ${n1}`, next: 's' + n1 },
+        { text: `Play it safe → scene ${n2}`, next: 's' + n2 }
+      ]
     };
   }
 }
 
-// UI logic
-const sceneTitle=document.getElementById('sceneTitle');
-const sceneText=document.getElementById('sceneText');
-const choicesEl=document.getElementById('choices');
-const backBtn=document.getElementById('backBtn');
-const restartBtn=document.getElementById('restartBtn');
-const sceneIndexEl=document.getElementById('sceneIndex');
-const progressBar=document.getElementById('progressBar');
+/* ===== UI bindings ===== */
+const sceneTitle = document.getElementById('sceneTitle');
+const sceneText = document.getElementById('sceneText');
+const choicesEl = document.getElementById('choices');
+const backBtn = document.getElementById('backBtn');
+const restartBtn = document.getElementById('restartBtn');
+const sceneIndexEl = document.getElementById('sceneIndex');
+const sceneTotalEl = document.getElementById('sceneTotal');
+const progressBar = document.getElementById('progressBar');
 
-let history=[];
-let current='s1';
+sceneTotalEl.textContent = TOTAL_SCENES;
 
-function showScene(id){
-  current=id;
-  const node=story[id];
-  sceneTitle.textContent=node.title;
-  sceneText.textContent=node.text;
-  choicesEl.innerHTML='';
-  if(node.ending){
-    const endNote=document.createElement('div');
-    endNote.style.color='#fbbf24';
-    endNote.textContent='✨ The End ✨';
-    choicesEl.appendChild(endNote);
-    const restart=document.createElement('button');
-    restart.className='choice-btn';
-    restart.textContent='Play Again';
-    restart.onclick=()=>{history=[];showScene('s1');};
-    choicesEl.appendChild(restart);
+let history = [];    // stack of visited ids, last = current
+let current = null;
+
+/**
+ * showScene(id, push=true)
+ * push=true means record this scene into history (used when navigating forward)
+ * push=false means we are showing scene without altering history (used for back)
+ */
+function showScene(id, push = true) {
+  if (!story[id]) id = 's1';
+  const node = story[id];
+
+  // handle history push
+  if (push) {
+    if (history.length === 0 || history[history.length - 1] !== id) {
+      history.push(id);
+    }
+  } else {
+    // ensure history ends with id (rare)
+    if (history.length === 0 || history[history.length - 1] !== id) {
+      history.push(id);
+    }
   }
-  (node.choices||[]).forEach(c=>{
-    const b=document.createElement('button');
-    b.className='choice-btn';
-    b.textContent=c.text;
-    b.onclick=()=>{history.push(c.next); showScene(c.next);};
-    choicesEl.appendChild(b);
+
+  current = id;
+
+  // update UI
+  sceneTitle.textContent = node.title || 'Scene';
+  sceneText.textContent = node.text || '';
+  choicesEl.innerHTML = '';
+
+  // if ending
+  if (node.ending) {
+    const endNote = document.createElement('div');
+    endNote.style.color = '#fbbf24';
+    endNote.style.fontWeight = '700';
+    endNote.style.marginBottom = '8px';
+    endNote.textContent = '✨ The End ✨';
+    choicesEl.appendChild(endNote);
+
+    const playAgain = document.createElement('button');
+    playAgain.className = 'choice-btn';
+    playAgain.textContent = 'Play Again';
+    playAgain.onclick = () => {
+      history = [];
+      showScene('s1', true);
+    };
+    choicesEl.appendChild(playAgain);
+  }
+
+  // normal choices
+  (node.choices || []).forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = c.text;
+    btn.onclick = () => {
+      showScene(c.next, true);
+    };
+    choicesEl.appendChild(btn);
   });
-  sceneIndexEl.textContent=+id.slice(1);
-  progressBar.style.width=Math.round((+id.slice(1)/totalScenes)*100)+'%';
+
+  // update progress / index / back button state
+  const idx = +id.slice(1);
+  sceneIndexEl.textContent = idx;
+  progressBar.style.width = Math.round((idx / TOTAL_SCENES) * 100) + '%';
+  backBtn.disabled = history.length <= 1;
 }
 
-backBtn.onclick=()=>{if(history.length>1){history.pop(); showScene(history.pop());}}
-restartBtn.onclick=()=>{history=[];showScene('s1');}
-showScene('s1');
+/* ===== Controls ===== */
+backBtn.onclick = () => {
+  if (history.length > 1) {
+    history.pop();              // remove current
+    const prev = history.pop(); // remove previous (we'll re-show it without pushing duplicate)
+    showScene(prev || 's1', true);
+  }
+};
+
+restartBtn.onclick = () => {
+  history = [];
+  showScene('s1', true);
+};
+
+/* ===== Start the game at scene 1 ===== */
+showScene('s1', true);
 </script>
 </body>
 </html>
+
+
 
 
 
