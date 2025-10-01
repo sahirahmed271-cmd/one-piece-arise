@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>One Piece — Console</title>
+<title>One Piece — Console (Slower)</title>
 <style>
   body{margin:0;font-family:Inter, system-ui, monospace;background:linear-gradient(180deg,#071029,#071a2a);color:#e6eef8;}
   .nav{display:flex;gap:12px;padding:14px;background:rgba(0,0,0,0.55);}
@@ -126,7 +126,7 @@ function tickViewers() {
 setInterval(tickViewers, 2500);
 tickViewers();
 
-/* ==================== Bulk logs generator (2000) + slower append ==================== */
+/* ==================== Bulk logs generator (2000) + much slower append ==================== */
 
 function generateBulkLogs(target, totalLines=2000) {
   const out = new Array(totalLines);
@@ -148,11 +148,10 @@ function generateBulkLogs(target, totalLines=2000) {
 }
 
 /*
-  appendLinesInChunks: append in small batches and pause slightly between batches
-  to slow the display so viewers can read. Uses requestAnimationFrame but with a
-  setTimeout between frames to reduce speed by approx 50%.
+  appendLinesInChunks: append in smaller batches and pause longer between batches
+  to slow the display roughly ~70% compared to previous speed.
 */
-function appendLinesInChunks(lines, chunk=40, pauseMs=40, onDone) {
+function appendLinesInChunks(lines, chunk=20, pauseMs=140, onDone) {
   let index = 0;
   const total = lines.length;
   const startTime = Date.now();
@@ -170,11 +169,11 @@ function appendLinesInChunks(lines, chunk=40, pauseMs=40, onDone) {
     updateStatusByPercent(pct);
 
     const elapsed = (Date.now() - startTime)/1000;
-    const remaining = pct > 0 ? Math.max(0, Math.round(elapsed*(1-pct)/pct)) : '-';
+    const remaining = pct > 0 ? Math.max(0,Math.round(elapsed*(1-pct)/pct)) : '-';
     etaText.textContent = 'ETA: ' + (remaining === '-' ? '??s' : remaining + 's');
 
     if (index < total) {
-      // slower pacing: request next frame after a small pause
+      // slower pacing: request next frame after a longer pause
       setTimeout(() => requestAnimationFrame(step), pauseMs);
     } else {
       if (onDone) onDone();
@@ -193,8 +192,8 @@ function updateStatusByPercent(pct) {
   else statusText.innerHTML = `<div class="spinner"></div> COMPLETE`;
 }
 
-/* typed intro slower: delay doubled from earlier 6ms -> 12ms */
-function typeOut(text, delay=12, cb) {
+/* typed intro slower: delay increased to ~40ms per character (was 12ms) */
+function typeOut(text, delay=40, cb) {
   let i = 0;
   const el = document.createElement('div');
   terminal.appendChild(el);
@@ -217,7 +216,7 @@ function runLargeSimulation(target) {
   etaText.textContent = 'ETA: 0s';
   updateStatusByPercent(0);
 
-  typeOut(`-- initializing console for ${target} --`, 12, () => {
+  typeOut(`-- initializing console for ${target} --`, 40, () => {
     appendLine('handshake -> OK');
     appendLine(`allocating mirror streams: ${HEX(10)}`);
     appendLine('syncing nodes...');
@@ -226,8 +225,8 @@ function runLargeSimulation(target) {
     // generate 2000 lines (slower and larger)
     const bulk = generateBulkLogs(target, 2000);
 
-    // append in smaller chunks with a short pause to slow the output (50% approx)
-    appendLinesInChunks(bulk, 40, 40, () => {
+    // append in smaller chunks with a long pause to slow the output (~70% slower)
+    appendLinesInChunks(bulk, 20, 140, () => {
       // final memory dumps and finish
       appendLine('--- memory-dump START ---');
       for (let i = 0; i < 8; i++) appendLine(`0x${HEX(8)}  ${BASE64(12)}  ${RANDMSG()}`);
@@ -270,5 +269,4 @@ input.addEventListener('keydown', e => { if (e.key === 'Enter') runBtn.click(); 
 </script>
 </body>
 </html>
-
 
