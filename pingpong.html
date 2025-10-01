@@ -144,11 +144,12 @@ function update() {
     let speedY = ballSpeedY;
 
     if(mode === 'solo'){
-        speedX = (ballSpeedX > 0 ? 4 : -4);
-        speedY = ballSpeedY * 0.8;
+        speedX = (ballSpeedX > 0 ? 4*1.05 : -4*1.05); // CPU slightly faster 5%
+        speedY = ballSpeedY * 0.8*1.05;
     } else if(mode === 'two'){
-        speedX = (ballSpeedX > 0 ? 8 : -8);
-        speedY = ballSpeedY * 1.2;
+        // two-player same as CPU solo mode speed
+        speedX = (ballSpeedX > 0 ? 4*1.05 : -4*1.05);
+        speedY = ballSpeedY * 0.8*1.05;
     }
 
     ballX += speedX;
@@ -271,4 +272,5 @@ function startGame(selectedMode){
 </script>
 </body>
 </html>
+
 
