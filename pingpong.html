@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One Piece Ping Pong</title>
+<style>
+body {
+    margin: 0;
+    background: url('one-piece-bg.jpg') no-repeat center center fixed;
+    background-size: cover;
+    font-family: Arial, sans-serif;
+    color: gold;
+    text-align: center;
+}
+h1 { margin-top: 20px; text-shadow: 2px 2px black; }
+canvas {
+    background-color: rgba(0,0,0,0.5);
+    display: block;
+    margin: 20px auto;
+    border: 2px solid gold;
+    border-radius: 12px;
+    touch-action: none;
+}
+.score {
+    font-size: 24px;
+    margin: 10px;
+    text-shadow: 2px 2px black;
+}
+.back-btn, .mode-btn {
+    display: inline-block;
+    margin: 12px;
+    padding: 10px 18px;
+    font-size: 18px;
+    color: black;
+    background: linear-gradient(90deg,#f59e0b,#fcd34d);
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 700;
+    cursor: pointer;
+}
+.mode-btn { margin-top: 0; }
+</style>
+</head>
+<body>
+<h1>🏓 One Piece Ping Pong 🏓</h1>
+
+<div>
+    <button class="mode-btn" onclick="startGame('solo')">🎮 Solo vs CPU</button>
+    <button class="mode-btn" onclick="startGame('two')">👥 Two Players</button>
+</div>
+
+<div class="score" id="score">Player: 0 | CPU: 0</div>
+<canvas id="gameCanvas" width="800" height="500"></canvas>
+<a href="index.html" class="back-btn">Back to Games Hub</a>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const paddleWidth = 20, paddleHeight = 100, ballRadius = 12;
+let player1Y = canvas.height/2 - paddleHeight/2;
+let player2Y = canvas.height/2 - paddleHeight/2;
+let ballX = canvas.width/2, ballY = canvas.height/2;
+let ballSpeedX = 6, ballSpeedY = 4;
+let score1 = 0, score2 = 0;
+let mode = 'solo';
+let upPressed=false, downPressed=false, wPressed=false, sPressed=false;
+
+// Draw elements
+function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    ctx.fillStyle = "#FF0000"; // Luffy
+    ctx.fillRect(20, player1Y, paddleWidth, paddleHeight);
+
+    ctx.fillStyle = "#00FF00"; // Zoro
+    ctx.fillRect(canvas.width - 40, player2Y, paddleWidth, paddleHeight);
+
+    ctx.fillStyle = "#FFD700";
+    ctx.beginPath();
+    ctx.arc(ballX, ballY, ballRadius, 0, Math.PI*2);
+    ctx.fill();
+
+    if(mode==='solo') document.getElementById('score').textContent = `Player: ${score1} | CPU: ${score2}`;
+    else document.getElementById('score').textContent = `Player1: ${score1} | Player2: ${score2}`;
+}
+
+// Ball movement
+function update() {
+    ballX += ballSpeedX;
+    ballY += ballSpeedY;
+
+    if(ballY + ballRadius > canvas.height || ballY - ballRadius < 0) ballSpeedY = -ballSpeedY;
+
+    if(ballX - ballRadius < 40 && ballY > player1Y && ballY < player1Y + paddleHeight){
+        ballSpeedX = -ballSpeedX;
+        ballSpeedX *= 1.05; ballSpeedY *= 1.05;
+    }
+
+    if(ballX + ballRadius > canvas.width - 40 && ballY > player2Y && ballY < player2Y + paddleHeight){
+        ballSpeedX = -ballSpeedX;
+        ballSpeedX *= 1.05; ballSpeedY *= 1.05;
+    }
+
+    if(ballX < 0){ score2++; resetBall(); }
+    if(ballX > canvas.width){ score1++; resetBall(); }
+
+    if(mode==='solo'){
+        const cpuCenter = player2Y + paddleHeight/2;
+        if(cpuCenter < ballY) player2Y += 5;
+        else player2Y -=5;
+        if(player2Y < 0) player2Y = 0;
+        if(player2Y + paddleHeight > canvas.height) player2Y = canvas.height - paddleHeight;
+    }
+
+    if(upPressed) player1Y -= 7;
+    if(downPressed) player1Y += 7;
+    if(player1Y < 0) player1Y=0;
+    if(player1Y + paddleHeight > canvas.height) player1Y = canvas.height - paddleHeight;
+
+    if(mode==='two'){
+        if(wPressed) player2Y -=7;
+        if(sPressed) player2Y +=7;
+        if(player2Y < 0) player2Y=0;
+        if(player2Y + paddleHeight > canvas.height) player2Y = canvas.height - paddleHeight;
+    }
+}
+
+// Reset ball
+function resetBall(){
+    ballX = canvas.width/2;
+    ballY = canvas.height/2;
+    ballSpeedX = (Math.random()>0.5?6:-6);
+    ballSpeedY = (Math.random()*4 + 3)*(Math.random()>0.5?1:-1);
+}
+
+// Keyboard controls
+document.addEventListener('keydown', e => {
+    if(mode==='two'){
+        if(e.key==='ArrowUp') upPressed=true;
+        if(e.key==='ArrowDown') downPressed=true;
+        if(e.key==='w' || e.key==='W') wPressed=true;
+        if(e.key==='s' || e.key==='S') sPressed=true;
+    } else {
+        if(e.key==='ArrowUp') upPressed=true;
+        if(e.key==='ArrowDown') downPressed=true;
+    }
+});
+document.addEventListener('keyup', e => {
+    if(mode==='two'){
+        if(e.key==='ArrowUp') upPressed=false;
+        if(e.key==='ArrowDown') downPressed=false;
+        if(e.key==='w' || e.key==='W') wPressed=false;
+        if(e.key==='s' || e.key==='S') sPressed=false;
+    } else {
+        if(e.key==='ArrowUp') upPressed=false;
+        if(e.key==='ArrowDown') downPressed=false;
+    }
+});
+
+// Mobile touch controls
+let touchY1 = null, touchY2 = null;
+canvas.addEventListener('touchstart', e => {
+    const rect = canvas.getBoundingClientRect();
+    e.preventDefault();
+    for(const touch of e.touches){
+        if(touch.clientX < rect.width/2) touchY1 = touch.clientY - player1Y;
+        else touchY2 = touch.clientY - player2Y;
+    }
+});
+canvas.addEventListener('touchmove', e => {
+    const rect = canvas.getBoundingClientRect();
+    e.preventDefault();
+    for(const touch of e.touches){
+        if(touch.clientX < rect.width/2){
+            player1Y = touch.clientY - touchY1;
+            if(player1Y <0) player1Y=0;
+            if(player1Y + paddleHeight > canvas.height) player1Y = canvas.height - paddleHeight;
+        } else {
+            if(mode==='two'){
+                player2Y = touch.clientY - touchY2;
+                if(player2Y <0) player2Y=0;
+                if(player2Y + paddleHeight > canvas.height) player2Y = canvas.height - paddleHeight;
+            }
+        }
+    }
+}, {passive:false});
+
+// Game loop
+function loop(){
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+
+// Start game
+function startGame(selectedMode){
+    mode = selectedMode;
+    score1 = 0;
+    score2 = 0;
+    player1Y = canvas.height/2 - paddleHeight/2;
+    player2Y = canvas.height/2 - paddleHeight/2;
+    upPressed=false; downPressed=false; wPressed=false; sPressed=false;
+    loop();
+}
+</script>
+</body>
+</html>
