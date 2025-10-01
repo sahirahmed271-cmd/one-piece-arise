@@ -3,19 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>One Piece Ludo – Full Version</title>
+<title>One Piece Ludo – Pro Version</title>
 <style>
 body {
   margin:0;
   font-family:Arial;
-  text-align:center;
   background:url('one-piece-bg.jpg') center/cover no-repeat;
   color:gold;
+  text-align:center;
 }
 #gameCanvas {
-  background:white;
-  margin:20px auto;
   display:block;
+  margin:20px auto;
   border:5px solid gold;
   max-width:95vw;
   height:auto;
@@ -33,14 +32,13 @@ button {
 #diceResult {
   font-size:24px;
   font-weight:bold;
-  margin-top:10px;
 }
 </style>
 </head>
 <body>
-<h1>🎲 One Piece Ludo – Full Version</h1>
+<h1>🎲 One Piece Ludo – Pro Version</h1>
 <canvas id="gameCanvas" width="600" height="600"></canvas><br>
-<button onclick="rollDice()" id="rollBtn">Roll Dice</button>
+<button onclick="rollDice()">Roll Dice</button>
 <div id="diceResult">Dice: -</div>
 
 <audio id="rollSound" src="https://www.fesliyanstudios.com/play-mp3/387" preload="auto"></audio>
@@ -49,291 +47,184 @@ button {
 <audio id="finishSound" src="https://www.fesliyanstudios.com/play-mp3/6905" preload="auto"></audio>
 
 <script>
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-const boardSize = 600;
-const cell = boardSize / 15;
+// Canvas
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const size = 600;
+const cell = size/15;
 
-// Load sounds
+// Sounds
 const rollSound = document.getElementById("rollSound");
 const moveSound = document.getElementById("moveSound");
 const captureSound = document.getElementById("captureSound");
 const finishSound = document.getElementById("finishSound");
 
-// Safe zones
-const safeZones = [
-  [1,6],[2,8],[6,1],[8,2],[13,6],[12,8],[6,13],[8,12]
-];
+// Board & paths
+const safeZones=[[1,6],[2,8],[6,1],[8,2],[13,6],[12,8],[6,13],[8,12]];
 
 // Pawn class
 class Pawn {
-  constructor(color, homeX, homeY, path, img=null) {
-    this.color = color;
-    this.homeX = homeX;
-    this.homeY = homeY;
-    this.path = path;
-    this.pos = -1;
-    this.finished = false;
-    this.img = img;
+  constructor(color, homeX, homeY, path) {
+    this.color=color;
+    this.homeX=homeX;
+    this.homeY=homeY;
+    this.path=path;
+    this.pos=-1;
+    this.finished=false;
   }
   draw() {
-    let px, py;
-    if(this.pos === -1){
-      px = this.homeX;
-      py = this.homeY;
-    } else {
-      let [cx,cy] = this.path[this.pos];
-      px = cx*cell + cell/2;
-      py = cy*cell + cell/2;
-    }
+    let x,y;
+    if(this.pos===-1){ x=this.homeX; y=this.homeY; }
+    else { let [px,py]=this.path[this.pos]; x=px*cell+cell/2; y=py*cell+cell/2; }
     ctx.beginPath();
-    if(this.img){
-      ctx.drawImage(this.img, px-cell/3, py-cell/3, cell*2/3, cell*2/3);
-    } else {
-      ctx.fillStyle = this.color;
-      ctx.arc(px, py, cell/3, 0, Math.PI*2);
-      ctx.fill();
-      ctx.strokeStyle = "black";
-      ctx.stroke();
-    }
+    ctx.fillStyle=this.color;
+    ctx.arc(x,y,cell/3,0,Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle="black"; ctx.stroke();
   }
 }
 
-// Path creation
+// Create base path
 function makePaths(){
-  let redPath = [];
-  for(let i=0;i<6;i++) redPath.push([i,6]);       
-  for(let i=0;i<6;i++) redPath.push([6,i]);       
-  for(let i=6;i<15;i++) redPath.push([i,0]);      
-  for(let i=1;i<6;i++) redPath.push([14,i]);      
-  for(let i=14;i>=9;i--) redPath.push([i,6]);     
-  for(let i=7;i<15;i++) redPath.push([8,i]);      
-  for(let i=13;i>=0;i--) redPath.push([i,14]);    
-  for(let i=13;i>=9;i--) redPath.push([0,i]);     
-  for(let i=1;i<6;i++) redPath.push([i,8]);       
-  for(let i=7;i<15;i++) redPath.push([6,i]);      
-  for(let i=1;i<=5;i++) redPath.push([7,i]);      
-  return redPath;
+  let path=[];
+  for(let i=0;i<6;i++) path.push([i,6]);
+  for(let i=0;i<6;i++) path.push([6,i]);
+  for(let i=6;i<15;i++) path.push([i,0]);
+  for(let i=1;i<6;i++) path.push([14,i]);
+  for(let i=14;i>=9;i--) path.push([i,6]);
+  for(let i=7;i<15;i++) path.push([8,i]);
+  for(let i=13;i>=0;i--) path.push([i,14]);
+  for(let i=13;i>=9;i--) path.push([0,i]);
+  for(let i=1;i<6;i++) path.push([i,8]);
+  for(let i=7;i<15;i++) path.push([6,i]);
+  for(let i=1;i<=5;i++) path.push([7,i]);
+  return path;
 }
-let paths = {
-  red: makePaths(),
-  blue: [],
-  green: [],
-  yellow: []
-};
-paths.blue = [...paths.red.slice(13), ...paths.red.slice(0,13)];
-paths.green = [...paths.red.slice(26), ...paths.red.slice(0,26)];
-paths.yellow = [...paths.red.slice(39), ...paths.red.slice(0,39)];
 
-// Setup pawns
-let pawns = { red: [], blue: [], green: [], yellow: [] };
+// Paths
+let paths={ red:makePaths(), blue:[], green:[], yellow:[] };
+paths.blue=[...paths.red.slice(13),...paths.red.slice(0,13)];
+paths.green=[...paths.red.slice(26),...paths.red.slice(0,26)];
+paths.yellow=[...paths.red.slice(39),...paths.red.slice(0,39)];
+
+// Pawns
+let pawns={ red:[], blue:[], green:[], yellow:[] };
 function initPawns(){
-  pawns.red = [
-    new Pawn("red", cell*2, cell*2, paths.red),
-    new Pawn("red", cell*4, cell*2, paths.red),
-    new Pawn("red", cell*2, cell*4, paths.red),
-    new Pawn("red", cell*4, cell*4, paths.red)
-  ];
-  pawns.blue = [
-    new Pawn("blue", cell*11, cell*2, paths.blue),
-    new Pawn("blue", cell*13, cell*2, paths.blue),
-    new Pawn("blue", cell*11, cell*4, paths.blue),
-    new Pawn("blue", cell*13, cell*4, paths.blue)
-  ];
-  pawns.green = [
-    new Pawn("green", cell*2, cell*11, paths.green),
-    new Pawn("green", cell*4, cell*11, paths.green),
-    new Pawn("green", cell*2, cell*13, paths.green),
-    new Pawn("green", cell*4, cell*13, paths.green)
-  ];
-  pawns.yellow = [
-    new Pawn("yellow", cell*11, cell*11, paths.yellow),
-    new Pawn("yellow", cell*13, cell*11, paths.yellow),
-    new Pawn("yellow", cell*11, cell*13, paths.yellow),
-    new Pawn("yellow", cell*13, cell*13, paths.yellow)
-  ];
+  pawns.red=[ new Pawn("red",cell*2,cell*2,paths.red), new Pawn("red",cell*4,cell*2,paths.red),
+              new Pawn("red",cell*2,cell*4,paths.red), new Pawn("red",cell*4,cell*4,paths.red) ];
+  pawns.blue=[ new Pawn("blue",cell*11,cell*2,paths.blue), new Pawn("blue",cell*13,cell*2,paths.blue),
+               new Pawn("blue",cell*11,cell*4,paths.blue), new Pawn("blue",cell*13,cell*4,paths.blue) ];
+  pawns.green=[ new Pawn("green",cell*2,cell*11,paths.green), new Pawn("green",cell*4,cell*11,paths.green),
+                new Pawn("green",cell*2,cell*13,paths.green), new Pawn("green",cell*4,cell*13,paths.green) ];
+  pawns.yellow=[ new Pawn("yellow",cell*11,cell*11,paths.yellow), new Pawn("yellow",cell*13,cell*11,paths.yellow),
+                 new Pawn("yellow",cell*11,cell*13,paths.yellow), new Pawn("yellow",cell*13,cell*13,paths.yellow) ];
 }
 initPawns();
 
-// Game variables
-let diceValue = 0;
-let rolling = false;
-let turnOrder = ["red","blue","green","yellow"];
-let currentPlayer = 0;
-let turnTimer = 45; // 45 seconds per turn
+// Game
+let dice=0;
+let rolling=false;
+let turnOrder=["red","blue","green","yellow"];
+let current=0;
 let timerInterval;
 
-// Dice roll animation
+// Roll Dice
 function rollDice(){
   if(rolling) return;
-  rolling=true;
-  rollSound.play();
-  let counter=0;
+  rolling=true; rollSound.play();
+  let count=0;
   let interval=setInterval(()=>{
-    diceValue=Math.floor(Math.random()*6)+1;
-    document.getElementById("diceResult").innerText="Rolling... "+diceValue;
-    counter++;
-    if(counter>10){
+    dice=Math.floor(Math.random()*6)+1;
+    document.getElementById("diceResult").innerText="Rolling... "+dice;
+    count++;
+    if(count>10){
       clearInterval(interval);
-      document.getElementById("diceResult").innerText="Dice: "+diceValue+" 🎲 ("+turnOrder[currentPlayer].toUpperCase()+")";
-      rolling=false;
-      startTimer();
+      document.getElementById("diceResult").innerText="Dice: "+dice+" ("+turnOrder[current].toUpperCase()+")";
+      rolling=false; startTimer();
     }
   },100);
 }
 
-// Start 45s timer
+// Timer
 function startTimer(){
   clearInterval(timerInterval);
-  let timeLeft=turnTimer;
+  let t=45;
   timerInterval=setInterval(()=>{
-    document.getElementById("diceResult").innerText+=" | "+timeLeft+"s left";
-    timeLeft--;
-    if(timeLeft<0){
-      clearInterval(timerInterval);
-      document.getElementById("diceResult").innerText="Turn skipped! Next player.";
-      nextTurn();
-    }
+    document.getElementById("diceResult").innerText+=" | "+t+"s left";
+    t--;
+    if(t<0){ clearInterval(timerInterval); nextTurn(); }
   },1000);
 }
 
 // Click pawn to move
 canvas.addEventListener("click",(e)=>{
-  if(rolling || diceValue===0) return;
+  if(rolling || dice===0) return;
   clearInterval(timerInterval);
-  let rect = canvas.getBoundingClientRect();
-  let mx = e.clientX - rect.left;
-  let my = e.clientY - rect.top;
-  let player = turnOrder[currentPlayer];
-
+  let rect=canvas.getBoundingClientRect();
+  let mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  let player=turnOrder[current];
   pawns[player].forEach(pawn=>{
-    let [cx,cy] = (pawn.pos>=0 ? pawn.path[pawn.pos] : [pawn.homeX/cell,pawn.homeY/cell]);
-    let px = cx*cell+cell/2, py = cy*cell+cell/2;
-    if(Math.sqrt((mx-px)**2+(my-py)**2) < cell/2){
-      movePawn(pawn,player);
-    }
+    let [cx,cy]=pawn.pos>=0 ? pawn.path[pawn.pos] : [pawn.homeX/cell,pawn.homeY/cell];
+    let px=cx*cell+cell/2, py=cy*cell+cell/2;
+    if(Math.sqrt((mx-px)**2+(my-py)**2)<cell/2){ movePawn(pawn,player); }
   });
 });
 
 // Move pawn
 function movePawn(pawn,player){
   if(pawn.finished) return;
-  if(pawn.pos===-1 && diceValue===6){
-    pawn.pos=0;
-    moveSound.play();
-  } else if(pawn.pos>=0){
-    let newPos = pawn.pos + diceValue;
-    if(newPos < pawn.path.length){
-      pawn.pos=newPos;
-      moveSound.play();
-      captureCheck(pawn,player);
-      if(pawn.pos===pawn.path.length-1){
-        pawn.finished=true;
-        finishSound.play();
-      }
-    }
-  }
-
-  if(pawns[player].every(p=>p.finished)){
-    alert(player.toUpperCase()+" WINS the game! 🏆");
-    resetGame();
-    return;
-  }
-
-  if(diceValue!==6) nextTurn();
-  diceValue=0;
+  if(pawn.pos===-1 && dice===6){ pawn.pos=0; moveSound.play(); }
+  else if(pawn.pos>=0){ let np=pawn.pos+dice; if(np<pawn.path.length){ pawn.pos=np; moveSound.play(); captureCheck(pawn,player);
+    if(pawn.pos===pawn.path.length-1){ pawn.finished=true; finishSound.play(); } } }
+  if(pawns[player].every(p=>p.finished)){ alert(player.toUpperCase()+" WINS!"); resetGame(); return; }
+  if(dice!==6) nextTurn();
+  dice=0;
 }
 
 // Capture
 function captureCheck(pawn,player){
-  let [cx,cy] = pawn.path[pawn.pos];
-  for(let color in pawns){
-    if(color!==player){
-      pawns[color].forEach(other=>{
-        if(other.pos>=0 && !other.finished){
-          let [ox,oy] = other.path[other.pos];
-          if(cx===ox && cy===oy && !isSafe(cx,cy)){
-            other.pos=-1;
-            captureSound.play();
-          }
-        }
-      });
+  let [cx,cy]=pawn.path[pawn.pos];
+  for(let c in pawns) if(c!==player) pawns[c].forEach(p=>{
+    if(p.pos>=0 && !p.finished){
+      let [ox,oy]=p.path[p.pos]; if(cx===ox && cy===oy && !isSafe(cx,cy)){ p.pos=-1; captureSound.play(); }
     }
-  }
+  });
 }
+function isSafe(x,y){ return safeZones.some(z=>z[0]===x && z[1]===y); }
 
-function isSafe(x,y){
-  return safeZones.some(z=>z[0]===x && z[1]===y);
-}
+// Next turn
+function nextTurn(){ current=(current+1)%4; dice=0; if(turnOrder[current]==="blue") setTimeout(()=>aiMove("blue"),500); else startTimer(); }
 
-// Next turn (AI moves if bot)
-function nextTurn(){
-  currentPlayer=(currentPlayer+1)%4;
-  diceValue=0;
-  if(turnOrder[currentPlayer]==="blue"){ // Example AI for Blue
-    setTimeout(()=>aiMove("blue"),500);
-  } else {
-    startTimer();
-  }
-}
-
-// Simple AI
+// AI move
 function aiMove(player){
   rollDice();
   setTimeout(()=>{
-    let movable = pawns[player].filter(p=>p.pos!==-1 || diceValue===6 && !p.finished);
-    if(movable.length>0){
-      let pawn = movable[Math.floor(Math.random()*movable.length)];
-      movePawn(pawn,player);
-    } else {
-      nextTurn();
-    }
+    let movable=pawns[player].filter(p=>p.pos!==-1 || dice===6 && !p.finished);
+    if(movable.length>0){ let pawn=movable[Math.floor(Math.random()*movable.length)]; movePawn(pawn,player); }
+    else nextTurn();
   },1500);
 }
 
 // Reset
-function resetGame(){
-  initPawns();
-  currentPlayer=0;
-  diceValue=0;
-}
+function resetGame(){ initPawns(); current=0; dice=0; }
 
 // Draw
-function drawBoard(){
-  ctx.clearRect(0,0,boardSize,boardSize);
-
-  // Grid
+function draw(){
+  ctx.clearRect(0,0,size,size);
   ctx.strokeStyle="black";
-  for(let i=0;i<15;i++){
-    for(let j=0;j<15;j++){
-      ctx.strokeRect(i*cell,j*cell,cell,cell);
-    }
-  }
-
-  // Safe zones
-  safeZones.forEach(([x,y])=>{
-    ctx.fillStyle="lightgreen";
-    ctx.fillRect(x*cell,y*cell,cell,cell);
-  });
-
-  // Highlight turn
-  ctx.fillStyle="rgba(255,215,0,0.3)";
-  ctx.fillRect(0,0,boardSize,cell);
-  ctx.font="20px Arial";
-  ctx.fillStyle="black";
-  ctx.fillText("Current Turn: "+turnOrder[currentPlayer].toUpperCase(),10,20);
-
-  // Pawns
-  for(let color in pawns){
-    pawns[color].forEach(p=>p.draw());
-  }
-
-  requestAnimationFrame(drawBoard);
+  for(let i=0;i<15;i++) for(let j=0;j<15;j++) ctx.strokeRect(i*cell,j*cell,cell,cell);
+  safeZones.forEach(([x,y])=>{ ctx.fillStyle="lightgreen"; ctx.fillRect(x*cell,y*cell,cell,cell); });
+  ctx.fillStyle="rgba(255,215,0,0.3)"; ctx.fillRect(0,0,size,cell);
+  ctx.font="20px Arial"; ctx.fillStyle="black";
+  ctx.fillText("Turn: "+turnOrder[current].toUpperCase(),10,20);
+  for(let c in pawns) pawns[c].forEach(p=>p.draw());
+  requestAnimationFrame(draw);
 }
-drawBoard();
+draw();
 </script>
 </body>
 </html>
+
 
 
 
